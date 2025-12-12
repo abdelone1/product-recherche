@@ -39,6 +39,18 @@ const CONFIG = {
 };
 
 // ============================================
+// Supabase Integration
+// ============================================
+
+const SUPABASE_URL = 'https://fryqwwiqainzhjiigsma.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeXF3d2lxYWluemhqaWlnc21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NDQ2NjMsImV4cCI6MjA4MTEyMDY2M30.8r-9kwBdxp6bhKtZR-IfNS3STfOttwHoJMsE3Yny778';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+console.log("⚡ Supabase initialized!");
+
+
+// ============================================
 // State Management
 // ============================================
 
@@ -877,11 +889,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     initializeUI();
     setupEventListeners();
+    // loadProducts() starts the listener which will call updateDashboard
     loadProducts();
-    initializeUI();
-    setupEventListeners();
-    updateDashboard();
-    renderProductsTable();
 });
 
 function initializeUI() {
@@ -1193,19 +1202,23 @@ function handleProductSubmit(e) {
         grade: getGrade(score),
         profit,
         date: new Date().toISOString().split('T')[0],
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        validated: false // Ensure validated field exists
     };
 
-    products.push(product);
-    saveProducts();
-    updateDashboard();
-
-    showToast('Produit ajouté avec succès!');
-    e.target.reset();
-    resetScorePreview();
-
-    // Navigate to products list
-    navigateToSection('products');
+    // Save to Supabase
+    supabase.from('products').insert([product])
+        .then(({ error }) => {
+            if (error) throw error;
+            showToast('Produit ajouté (Cloud) !');
+            e.target.reset();
+            resetScorePreview();
+            navigateToSection('products');
+        })
+        .catch((error) => {
+            console.error("Error adding product: ", error);
+            showToast('Erreur lors de l\'ajout');
+        });
 }
 
 // ============================================
@@ -1281,19 +1294,25 @@ function handleEditSubmit(e) {
     const score = calculateScore(updatedData);
     const profit = calculateProfit(updatedData.buyPrice, updatedData.sellPrice);
 
-    products[productIndex] = {
-        ...products[productIndex],
+    // Prepare update object
+    const updatePayload = {
         ...updatedData,
         score,
         grade: getGrade(score),
         profit
     };
 
-    saveProducts();
-    updateDashboard();
-    renderProductsTable();
-    closeEditModal();
-    showToast('Produit modifié avec succès!');
+    // Update Supabase
+    supabase.from('products').update(updatePayload).eq('id', currentEditId)
+        .then(({ error }) => {
+            if (error) throw error;
+            showToast('Produit modifié (Cloud) !');
+            closeEditModal();
+        })
+        .catch((error) => {
+            console.error("Error updating product: ", error);
+            showToast('Erreur lors de la modification');
+        });
 }
 
 // ============================================
@@ -1302,11 +1321,15 @@ function handleEditSubmit(e) {
 
 function deleteProduct(productId) {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
-        products = products.filter(p => p.id !== productId);
-        saveProducts();
-        updateDashboard();
-        renderProductsTable();
-        showToast('Produit supprimé!');
+        supabase.from('products').delete().eq('id', productId)
+            .then(({ error }) => {
+                if (error) throw error;
+                showToast('Produit supprimé (Cloud) !');
+            })
+            .catch((error) => {
+                console.error("Error deleting product: ", error);
+                showToast('Erreur lors de la suppression');
+            });
     }
 }
 
@@ -1688,26 +1711,72 @@ function filterProducts() {
 // ============================================
 
 function saveProducts() {
-    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(products));
+    // Deprecated: Data is managed by Supabase
 }
 
 function loadProducts() {
+    // 1. Migration: Upload LocalStorage data to Supabase if exists
     const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
     if (stored) {
         try {
-            products = JSON.parse(stored);
+            const localProducts = JSON.parse(stored);
+            if (localProducts.length > 0) {
+                showToast('Migration vers Supabase en cours...');
+                // Ensure all products have IDs
+                const productsToUpload = localProducts.map(p => ({
+                    ...p,
+                    id: p.id || Date.now().toString() + Math.random().toString(36).substr(2, 5)
+                }));
+
+                supabase.from('products').insert(productsToUpload)
+                    .then(({ error }) => {
+                        if (!error) {
+                            console.log('Migration complete');
+                            localStorage.removeItem(CONFIG.STORAGE_KEY);
+                            showToast('Migration terminée ! Données dans le Cloud.');
+                        } else {
+                            console.error('Migration partial error:', error);
+                            // Keep local storage if error, to be safe
+                        }
+                    });
+            }
         } catch (e) {
-            console.error('Error loading products:', e);
-            products = [];
+            console.error('Migration error:', e);
         }
     }
 
-    // If no products, load sample products
-    if (products.length === 0 && SAMPLE_PRODUCTS) {
-        products = [...SAMPLE_PRODUCTS];
-        saveProducts();
-        console.log('Sample products loaded!');
-    }
+    // 2. Initial Load
+    supabase.from('products').select('*')
+        .then(({ data, error }) => {
+            if (error) console.error('Error loading:', error);
+            else {
+                products = data || [];
+                updateDashboard();
+                renderProductsTable();
+
+                // Update badge
+                const validCount = products.filter(p => p.validated).length;
+                const badge = document.getElementById('validatedCount');
+                if (badge) badge.textContent = `${validCount} produits`;
+            }
+        });
+
+    // 3. Real-time Subscription
+    supabase.channel('products')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
+            console.log('Change received!', payload);
+            // Refresh data on any change
+            supabase.from('products').select('*').then(({ data }) => {
+                products = data || [];
+                updateDashboard();
+                renderProductsTable();
+
+                const validCount = products.filter(p => p.validated).length;
+                const badge = document.getElementById('validatedCount');
+                if (badge) badge.textContent = `${validCount} produits`;
+            });
+        })
+        .subscribe();
 }
 
 // ============================================
@@ -1804,14 +1873,26 @@ function handleImport(e) {
     reader.onload = function (event) {
         try {
             const imported = JSON.parse(event.target.result);
-            if (Array.isArray(imported)) {
-                products = [...products, ...imported];
-                saveProducts();
-                updateDashboard();
-                renderProductsTable();
-                showToast(`${imported.length} produits importés!`);
+            if (Array.isArray(imported) && imported.length > 0) {
+                showToast(`Import de ${imported.length} produits vers Supabase...`);
+
+                const productsToImport = imported.map(p => ({
+                    ...p,
+                    id: p.id || (Date.now().toString() + Math.random().toString(36).substr(2, 5))
+                }));
+
+                supabase.from('products').insert(productsToImport)
+                    .then(({ error }) => {
+                        if (error) throw error;
+                        showToast('Import terminé avec succès (Cloud) !');
+                    })
+                    .catch(error => {
+                        console.error("Import failed: ", error);
+                        showToast('Erreur lors de l\'import');
+                    });
             }
         } catch (err) {
+            console.error(err);
             showToast('Erreur lors de l\'import!');
         }
     };
@@ -1824,12 +1905,21 @@ function handleImport(e) {
 // ============================================
 
 function handleClearData() {
-    if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer TOUTES les données? Cette action est irréversible!')) {
-        products = [];
-        saveProducts();
-        updateDashboard();
-        renderProductsTable();
-        showToast('Toutes les données ont été effacées!');
+    if (confirm('⚠️ ATTENTION : Cela va supprimer TOUTES les données du Cloud pour tout le monde. Continuer ?')) {
+        // Supabase doesn't support 'delete all' easily without a where clause, so we use a trick or delete by ID
+        // For safety/simplicity in this app, we'll fetch all IDs and delete them (not efficient for huge data but fine here)
+        supabase.from('products').select('id').then(({ data }) => {
+            const ids = data.map(p => p.id);
+            if (ids.length > 0) {
+                supabase.from('products').delete().in('id', ids)
+                    .then(({ error }) => {
+                        if (error) throw error;
+                        showToast('Base de données Cloud entièrement effacée !');
+                    });
+            } else {
+                showToast('Déjà vide !');
+            }
+        });
     }
 }
 
