@@ -935,6 +935,9 @@ function handleLogin(e) {
         sessionStorage.setItem('productResearchUser', username);
         checkAuth();
         showToast(`Bienvenue, ${username} !`);
+
+        // Log the connection
+        logActivity('Connexion', 'Session démarrée');
     } else {
         if (errorEl) errorEl.style.display = 'block';
     }
