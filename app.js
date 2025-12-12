@@ -1638,7 +1638,7 @@ function getTargetProfit(productId) {
     return productTargetProfits[productId] !== undefined ? productTargetProfits[productId] : 10;
 }
 
-// Adjust target profit for a product
+// Adjust target profit for a product (using +/- buttons)
 function adjustTargetProfit(productId, delta) {
     const current = getTargetProfit(productId);
     const newProfit = Math.max(0, current + delta);
@@ -1646,7 +1646,17 @@ function adjustTargetProfit(productId, delta) {
 
     // Re-render to show updates
     renderProductsTable();
-    showToast(`Profit cible ajusté à $${newProfit}`);
+    renderDeclinedProducts();
+}
+
+// Set target profit directly (from input field)
+function setTargetProfit(productId, value) {
+    const newProfit = Math.max(0, parseFloat(value) || 0);
+    productTargetProfits[productId] = newProfit;
+
+    // Re-render to show updates
+    renderProductsTable();
+    renderDeclinedProducts();
 }
 
 // Calculate dynamic selling price based on target profit and COD costs
@@ -1843,7 +1853,10 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
             <td class="profit-control-cell">
                 <div class="profit-control-wrapper ${profitClass}">
                     <button class="profit-btn" onclick="adjustTargetProfit('${product.id}', -1)">-</button>
-                    <span class="profit-value">${formatPrice(dynamicData.targetProfitUSD)}</span>
+                    <input type="number" class="profit-input" value="${dynamicData.targetProfitUSD}" 
+                        min="0" step="1" 
+                        onchange="setTargetProfit('${product.id}', this.value)"
+                        style="width: 60px; text-align: center; border: none; background: transparent; font-weight: bold; font-size: 14px; color: inherit;">
                     <button class="profit-btn" onclick="adjustTargetProfit('${product.id}', 1)">+</button>
                 </div>
                 <small class="profit-label">Profit Cible</small>
