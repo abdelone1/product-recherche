@@ -1697,17 +1697,27 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
 
 // Function to validate a product
 // Function to validate a product
+// Function to validate a product
 function validateProduct(productId) {
+    // 1. Optimistic Update (Immediate Feedback)
+    const product = products.find(p => p.id === productId);
+    if (product) {
+        product.validated = true;
+        renderProductsTable(); // Move instantly from Active to Validated list
+        updateDashboard();
+        showToast('✅ Produit validé !');
+    }
+
+    // 2. Send to Cloud (Background)
     supabase.from('products').update({ validated: true }).eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error validating product: ", error);
-                showToast('Erreur lors de la validation');
-            } else {
-                showToast('✅ Produit validé (Cloud) !');
-                // View updates automatically via real-time listener
+                showToast('Erreur synchro cloud, refraîchissez');
+                // Revert if needed, but for validation simple toast is usually enough
             }
         });
+}
 }
 
 function filterProducts() {
