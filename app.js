@@ -1041,6 +1041,30 @@ function setupEventListeners() {
         navigateToSection('add-product');
     });
 
+    // Force Refresh Button (Clear cache)
+    const refreshBtn = document.getElementById('forceRefreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            sessionStorage.clear();
+            localStorage.clear();
+            showToast('Cache vidé ! Rechargement...');
+            setTimeout(() => {
+                location.reload(true);
+            }, 500);
+        });
+    }
+
+    // Logout Button
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            sessionStorage.removeItem('productResearchUser');
+            currentUser = null;
+            showToast('Déconnecté !');
+            checkAuth();
+        });
+    }
+
     // Product form
     document.getElementById('productForm').addEventListener('submit', handleProductSubmit);
     document.getElementById('productForm').addEventListener('reset', resetScorePreview);
