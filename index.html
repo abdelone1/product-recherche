@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Research Tool - Facebook Ads Analyzer</title>
+    <meta name="description"
+        content="Outil gratuit pour analyser la Facebook Ads Library et trouver des produits rentables à vendre en Afrique">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">🔍</span>
+                <span class="logo-text">Product<span class="accent">Finder</span></span>
+            </div>
+            <button class="collapse-btn" id="sidebarCollapseBtn" title="Réduire la barre latérale">«</button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="#add-product" class="nav-item" data-section="add-product">
+                <span class="nav-icon">➕</span>
+                <span class="nav-text">Ajouter Produit</span>
+            </a>
+            <a href="#products" class="nav-item" data-section="products">
+                <span class="nav-icon">📦</span>
+                <span class="nav-text">Mes Produits</span>
+            </a>
+            <a href="#facebook-ads" class="nav-item" data-section="facebook-ads">
+                <span class="nav-icon">📱</span>
+                <span class="nav-text">Facebook Ads</span>
+            </a>
+            <a href="#validated-products" class="nav-item" data-section="validated-products">
+                <span class="nav-icon">✅</span>
+                <span class="nav-text">Produits Validés</span>
+            </a>
+            <a href="#simulator" class="nav-item" data-section="simulator">
+                <span class="nav-icon">🧮</span>
+                <span class="nav-text">Simulateur COD</span>
+            </a>
+            <a href="#settings" class="nav-item" data-section="settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Paramètres</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="export-btn" id="exportBtn">
+                <span>📥</span> Exporter CSV
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <div class="header-title">
+                <h1 id="pageTitle">Dashboard</h1>
+                <p class="header-subtitle" id="pageSubtitle">Vue d'ensemble de vos produits</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" id="quickAddBtn">
+                    <span>+</span> Ajouter Produit
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section class="section" id="dashboard-section">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">📦</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalProducts">0</span>
+                        <span class="stat-label">Total Produits</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">📅</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="todayProducts">0</span>
+                        <span class="stat-label">Aujourd'hui</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">⭐</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="avgScore">0</span>
+                        <span class="stat-label">Score Moyen</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">💰</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="avgProfit">$0</span>
+                        <span class="stat-label">Profit Moyen</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Products -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Produits Récents</h2>
+                    <a href="#products" class="link" data-section="products">Voir tout →</a>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="recentProductsTable">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Date</th>
+                                <th>Réseaux</th>
+                                <th>Prix Achat</th>
+                                <th>Prix Vente</th>
+                                <th>Profit</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentProductsBody">
+                            <!-- Products will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyDashboard">
+                        <span class="empty-icon">📦</span>
+                        <p>Aucun produit ajouté</p>
+                        <button class="btn btn-secondary" data-section="add-product">Ajouter votre premier
+                            produit</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products by Score -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🏆 Top Produits</h2>
+                </div>
+                <div class="top-products-grid" id="topProductsGrid">
+                    <!-- Top products will be inserted here -->
+                </div>
+                <div class="empty-state" id="emptyTopProducts" style="display: none;">
+                    <span class="empty-icon">🏆</span>
+                    <p>Ajoutez des produits pour voir le classement</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Product Section -->
+        <section class="section hidden" id="add-product-section">
+            <div class="form-container">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>➕ Ajouter un Nouveau Produit</h2>
+                    </div>
+                    <form id="productForm" class="product-form">
+                        <!-- Basic Info -->
+                        <div class="form-group">
+                            <label for="productName">Nom du Produit *</label>
+                            <input type="text" id="productName" required placeholder="Ex: Lampe LED Rechargeable">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="buyPrice">Prix d'Achat (USD) *</label>
+                                <input type="number" id="buyPrice" required step="0.01" min="0" placeholder="5.00">
+                            </div>
+                            <div class="form-group">
+                                <label for="sellPrice">Prix de Vente (USD) *</label>
+                                <input type="number" id="sellPrice" required step="0.01" min="0" placeholder="15.00">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="weight">Poids (grammes)</label>
+                                <input type="number" id="weight" step="1" min="0" placeholder="350">
+                            </div>
+                            <div class="form-group">
+                                <label for="productLink">Lien Produit (Alibaba/Autre)</label>
+                                <input type="url" id="productLink" placeholder="https://alibaba.com/...">
+                            </div>
+                        </div>
+
+                        <!-- Countries Selection -->
+                        <div class="form-group">
+                            <label>Pays Cibles</label>
+                            <div class="countries-grid" id="countriesGrid">
+                                <!-- Countries will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Criteria Scoring -->
+                        <div class="form-group">
+                            <label>Critères de Scoring</label>
+                            <div class="criteria-grid">
+                                <label class="checkbox-card">
+                                    <input type="checkbox" id="criteriaAudience">
+                                    <span class="checkbox-content">
+                                        <span class="checkbox-icon">👥</span>
+                                        <span class="checkbox-text">Large Audience</span>
+                                        <span class="checkbox-points">+15 pts</span>
+                                    </span>
+                                </label>
+                                <label class="checkbox-card">
+                                    <input type="checkbox" id="criteriaProblem">
+                                    <span class="checkbox-content">
+                                        <span class="checkbox-icon">🔧</span>
+                                        <span class="checkbox-text">Résout un problème</span>
+                                        <span class="checkbox-points">+20 pts</span>
+                                    </span>
+                                </label>
+                                <label class="checkbox-card">
+                                    <input type="checkbox" id="criteriaWow">
+                                    <span class="checkbox-content">
+                                        <span class="checkbox-icon">✨</span>
+                                        <span class="checkbox-text">Effet "Wow"</span>
+                                        <span class="checkbox-points">+15 pts</span>
+                                    </span>
+                                </label>
+                                <label class="checkbox-card">
+                                    <input type="checkbox" id="criteriaCompetition">
+                                    <span class="checkbox-content">
+                                        <span class="checkbox-icon">🎯</span>
+                                        <span class="checkbox-text">Faible Concurrence</span>
+                                        <span class="checkbox-points">+15 pts</span>
+                                    </span>
+                                </label>
+                                <label class="checkbox-card">
+                                    <input type="checkbox" id="criteriaUpsell">
+                                    <span class="checkbox-content">
+                                        <span class="checkbox-icon">📈</span>
+                                        <span class="checkbox-text">Possibilité d'Upsell</span>
+                                        <span class="checkbox-points">+10 pts</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="form-group">
+                            <label for="notes">Notes</label>
+                            <textarea id="notes" rows="3"
+                                placeholder="Observations, idées de marketing, etc."></textarea>
+                        </div>
+
+                        <!-- Live Score Preview -->
+                        <div class="score-preview" id="scorePreview">
+                            <div class="score-circle">
+                                <span class="score-value" id="previewScore">0</span>
+                                <span class="score-max">/100</span>
+                            </div>
+                            <div class="score-details">
+                                <div class="score-grade" id="previewGrade">D</div>
+                                <div class="profit-preview">
+                                    <span class="profit-label">Profit Estimé:</span>
+                                    <span class="profit-value" id="previewProfit">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-actions">
+                            <button type="reset" class="btn btn-secondary">Réinitialiser</button>
+                            <button type="submit" class="btn btn-primary">💾 Sauvegarder Produit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Products List Section -->
+        <section class="section hidden" id="products-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📦 Tous les Produits</h2>
+                    <div class="header-controls">
+                        <input type="text" id="searchProducts" class="search-input" placeholder="🔍 Rechercher...">
+                        <select id="filterScore" class="filter-select">
+                            <option value="all">Tous les scores</option>
+                            <option value="A">Score A (80-100)</option>
+                            <option value="B">Score B (60-79)</option>
+                            <option value="C">Score C (40-59)</option>
+                            <option value="D">Score D (0-39)</option>
+                        </select>
+                        <div class="currency-toggle">
+                            <button class="currency-btn active" data-currency="USD" onclick="setCurrency('USD')">$
+                                USD</button>
+                            <button class="currency-btn" data-currency="CFA" onclick="setCurrency('CFA')">CFA</button>
+                            <button class="currency-btn" data-currency="MAD" onclick="setCurrency('MAD')">MAD</button>
+                            <button class="currency-btn" data-currency="EUR" onclick="setCurrency('EUR')">€ EUR</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="allProductsTable">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Date</th>
+                                <th>Réseaux</th>
+                                <th>Prix Achat</th>
+                                <th>Poids</th>
+                                <th>Vente Min. (Rec)</th>
+                                <th>Profit Cible</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allProductsBody">
+                            <!-- Products will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyProducts">
+                        <span class="empty-icon">📦</span>
+                        <p>Aucun produit trouvé</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Validated Products Section -->
+        <section class="section hidden" id="validated-products-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>✅ Produits Validés (Gagnants)</h2>
+                    <div class="header-actions">
+                        <span class="badge badge-success" id="validatedCount">0 produits</span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="validatedProductsTable">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Date</th>
+                                <th>Réseaux</th>
+                                <th>Prix Achat</th>
+                                <th>Poids</th>
+                                <th>Vente Min. (Rec)</th>
+                                <th>Profit Cible</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="validatedProductsBody">
+                            <!-- Products will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyValidatedProducts">
+                        <span class="empty-icon">🏆</span>
+                        <p>Aucun produit validé pour le moment</p>
+                        <p class="empty-hint">Validez des produits depuis votre liste "Mes Produits"</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Facebook Ads Library Section -->
+        <section class="section hidden" id="facebook-ads-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📱 Facebook Ads Library</h2>
+                </div>
+                <div class="facebook-ads-content">
+                    <div class="ads-intro">
+                        <p>Utilisez la Facebook Ads Library pour trouver des produits gagnants. Voici comment procéder :
+                        </p>
+                    </div>
+
+                    <div class="ads-steps">
+                        <div class="step-card">
+                            <span class="step-number">1</span>
+                            <h3>Accéder à la Library</h3>
+                            <p>Cliquez sur le bouton ci-dessous pour ouvrir Facebook Ads Library</p>
+                        </div>
+                        <div class="step-card">
+                            <span class="step-number">2</span>
+                            <h3>Filtrer par Pays</h3>
+                            <p>Sélectionnez les pays africains cibles dans les filtres</p>
+                        </div>
+                        <div class="step-card">
+                            <span class="step-number">3</span>
+                            <h3>Rechercher par Vidéo</h3>
+                            <p>Les pubs vidéo ont souvent de meilleurs produits</p>
+                        </div>
+                        <div class="step-card">
+                            <span class="step-number">4</span>
+                            <h3>Analyser & Ajouter</h3>
+                            <p>Trouvez un bon produit et ajoutez-le ici</p>
+                        </div>
+                    </div>
+
+                    <div class="ads-actions">
+                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&is_targeted_country=false&media_type=video"
+                            target="_blank" class="btn btn-facebook">
+                            <span>📱</span> Ouvrir Facebook Ads Library
+                        </a>
+                    </div>
+
+                    <div class="quick-links">
+                        <h3>🌍 Liens Rapides par Pays</h3>
+                        <div class="country-links" id="countryLinks">
+                            <!-- Country links will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="telegram-channels">
+                        <h3>📢 Channels Telegram Recommandés</h3>
+                        <div class="channel-links">
+                            <a href="https://t.me/topjemlaa" target="_blank" class="channel-link">
+                                <span>📱</span> t.me/topjemlaa
+                            </a>
+                            <a href="https://t.me/hazargoma" target="_blank" class="channel-link">
+                                <span>📱</span> t.me/hazargoma
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section class="section hidden" id="settings-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚙️ Paramètres</h2>
+                </div>
+                <div class="settings-content">
+                    <div class="setting-group">
+                        <h3>🌍 Pays Cibles</h3>
+                        <p>Modifiez les pays disponibles pour la sélection</p>
+                        <div class="countries-settings" id="countriesSettings">
+                            <!-- Country settings will be inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>💾 Données</h3>
+                        <div class="data-actions">
+                            <button class="btn btn-secondary" id="exportAllBtn">
+                                📥 Exporter toutes les données (CSV)
+                            </button>
+                            <button class="btn btn-secondary" id="importBtn">
+                                📤 Importer des données (JSON)
+                            </button>
+                            <input type="file" id="importFile" accept=".json" style="display: none;">
+                            <button class="btn btn-danger" id="clearDataBtn">
+                                🗑️ Effacer toutes les données
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="setting-group">
+                        <h3>ℹ️ À propos</h3>
+                        <p>Product Research Tool v1.0</p>
+                        <p>Outil gratuit pour identifier les produits prometteurs à vendre en Afrique.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Simulator COD Section -->
+        <section class="section hidden" id="simulator-section">
+            <div class="simulator-layout">
+                <!-- Left: Form -->
+                <div class="simulator-form-panel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>🧮 Simulateur de Profit</h2>
+                        </div>
+
+                        <div class="simulator-form">
+                            <!-- Buy Price with Currency -->
+                            <div class="form-group">
+                                <label for="simBuyPrice">Prix d'achat du produit</label>
+                                <div class="input-with-currency">
+                                    <input type="number" id="simBuyPrice" step="0.01" min="0" placeholder="3"
+                                        oninput="autoCalculate()">
+                                    <select id="simBuyCurrency" onfocus="this.setAttribute('data-prev', this.value)"
+                                        onchange="convertInputCurrency(this, 'simBuyPrice')">
+                                        <option value="USD">USD ($)</option>
+                                        <option value="CFA">CFA</option>
+                                        <option value="MAD">MAD</option>
+                                        <option value="GNF">GNF</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Weight -->
+                            <div class="form-group">
+                                <label for="simWeight">Poids du produit (grammes)</label>
+                                <input type="number" id="simWeight" min="0" placeholder="200" oninput="autoCalculate()">
+                            </div>
+
+                            <!-- Source -->
+                            <div class="form-group">
+                                <label for="simSource">Pays de source/provenance</label>
+                                <select id="simSource" onchange="autoCalculate()">
+                                    <option value="Chine">🇨🇳 Chine</option>
+                                    <option value="Dubai">🇦🇪 Dubai</option>
+                                    <option value="Maroc-Avion">🇲🇦 Maroc (Avion)</option>
+                                    <option value="Maroc-Camion">🇲🇦 Maroc (Camion)</option>
+                                </select>
+                            </div>
+
+                            <!-- Sell Price with Currency -->
+                            <div class="form-group">
+                                <label for="simSellPrice">Prix de vente du produit</label>
+                                <div class="input-with-currency">
+                                    <input type="number" id="simSellPrice" step="1" min="0" placeholder="35"
+                                        oninput="autoCalculate()">
+                                    <select id="simSellCurrency" onfocus="this.setAttribute('data-prev', this.value)"
+                                        onchange="convertInputCurrency(this, 'simSellPrice')">
+                                        <option value="USD">USD ($)</option>
+                                        <option value="CFA" selected>CFA</option>
+                                        <option value="MAD">MAD</option>
+                                        <option value="GNF">GNF</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Destination -->
+                            <div class="form-group">
+                                <label for="simDestination">Pays de destination</label>
+                                <select id="simDestination" onchange="autoCalculate()">
+                                    <option value="CI">🇨🇮 Côte d'Ivoire</option>
+                                    <option value="SN">🇸🇳 Sénégal</option>
+                                    <option value="BF">🇧🇫 Burkina Faso</option>
+                                    <option value="TG">🇹🇬 Togo</option>
+                                    <option value="NE">🇳🇪 Niger</option>
+                                    <option value="ML">🇲🇱 Mali</option>
+                                    <option value="BJ">🇧🇯 Bénin</option>
+                                    <option value="GN">🇬🇳 Guinée Conakry</option>
+                                    <option value="TD">🇹🇩 Tchad</option>
+                                    <option value="GA">🇬🇦 Gabon</option>
+                                </select>
+                            </div>
+
+                            <!-- Quantity -->
+                            <div class="form-group">
+                                <label for="simQuantity">Quantité de produits</label>
+                                <input type="number" id="simQuantity" value="1" min="1" oninput="autoCalculate()">
+                            </div>
+
+                            <!-- Target Profit -->
+                            <div class="form-group target-profit-group">
+                                <label for="simTargetProfit">💰 Profit Minimum Souhaité (USD)</label>
+                                <div class="input-with-currency">
+                                    <input type="number" id="simTargetProfit" step="0.5" min="0" value="5"
+                                        placeholder="5" oninput="autoCalculate()">
+                                    <select id="simTargetCurrency" onchange="autoCalculate()">
+                                        <option value="USD" selected>USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                    </select>
+                                </div>
+                                <small class="form-hint">Le prix de vente minimum sera calculé automatiquement</small>
+                            </div>
+
+                            <!-- Advanced Parameters (collapsible) -->
+                            <div class="advanced-toggle" onclick="toggleAdvanced()">
+                                <span>Paramètres avancés</span>
+                                <span id="advancedArrow">▼</span>
+                            </div>
+
+                            <div class="advanced-params" id="advancedParams" style="display: none;">
+                                <!-- Ad Cost -->
+                                <div class="form-group">
+                                    <label for="simAdCost">Coût publicité par livraison (USD)</label>
+                                    <input type="number" id="simAdCost" step="0.01" min="0" value="10" placeholder="10"
+                                        oninput="autoCalculate()">
+                                    <small class="form-hint">Coût total publicité = 10 $ × nombre de livraisons</small>
+                                </div>
+
+                                <!-- Exchange Rates -->
+                                <div class="exchange-rates-edit">
+                                    <label>Taux de change pour <span id="destCountryName">Côte d'Ivoire</span></label>
+                                    <div class="rate-inputs">
+                                        <div class="rate-input">
+                                            <span>1 MAD =</span>
+                                            <input type="number" id="rateMAD" value="66" oninput="autoCalculate()">
+                                            <span id="rateCurrency1">CFA</span>
+                                        </div>
+                                        <div class="rate-input">
+                                            <span>1 USD =</span>
+                                            <input type="number" id="rateUSD" value="630" oninput="autoCalculate()">
+                                            <span id="rateCurrency2">CFA</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Reference -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>📦 Données de Configuration</h2>
+                            <button class="btn btn-secondary btn-sm" id="toggleShippingData">Voir/Masquer</button>
+                        </div>
+                        <p class="config-desc">Consultation des données utilisées par le simulateur (lecture seule)</p>
+                        <div class="shipping-data-table" id="shippingDataTable" style="display: none;">
+                            <div class="data-tabs">
+                                <button class="data-tab active" onclick="showDataTab('transport')">Frais de
+                                    Transport</button>
+                                <button class="data-tab" onclick="showDataTab('exchange')">Taux de Change</button>
+                                <button class="data-tab" onclick="showDataTab('delivery')">Frais de Livraison</button>
+                            </div>
+                            <div id="dataTabContent">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pays</th>
+                                            <th>Source</th>
+                                            <th>Type</th>
+                                            <th>Valeur</th>
+                                            <th>Devise</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="shippingDataBody">
+                                        <!-- Data will be inserted here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Results -->
+                <div class="simulator-results-panel">
+                    <div class="card results-card">
+                        <div class="card-header">
+                            <h2>📊 Résultats du Calcul</h2>
+                        </div>
+                        <div class="results-content">
+                            <!-- Main Profit -->
+                            <div class="profit-box" id="profitBox">
+                                <span class="profit-label">Profit Net Estimé</span>
+                                <span class="profit-value" id="resultProfit">+0.00 USD</span>
+                                <span class="profit-status" id="profitStatus">✓ Profit positif</span>
+                            </div>
+
+                            <!-- Revenue -->
+                            <div class="result-section">
+                                <h4>Revenus</h4>
+                                <span class="revenue-value" id="resultRevenue">0.00 USD</span>
+                            </div>
+
+                            <!-- Minimum Selling Price -->
+                            <div class="result-section min-price-section">
+                                <h4>💰 Prix de Vente Minimum</h4>
+                                <div class="min-price-info">
+                                    <span class="min-price-label">Pour un profit de <span id="targetProfitDisplay">5.00
+                                            USD</span></span>
+                                    <span class="min-price-value" id="minSellPrice">0 CFA</span>
+                                    <span class="min-price-usd" id="minSellPriceUSD">(~$0.00 USD)</span>
+                                </div>
+                            </div>
+
+
+                            <!-- Cost Breakdown -->
+                            <div class="result-section">
+                                <h4>Coûts Détaillés</h4>
+                                <div class="cost-breakdown">
+                                    <div class="cost-row">
+                                        <span>Coût d'achat:</span>
+                                        <span id="costBuy">0.00 USD</span>
+                                    </div>
+                                    <div class="cost-row">
+                                        <span>Coût de transport:</span>
+                                        <span id="costTransport">0.00 USD</span>
+                                    </div>
+                                    <div class="cost-row">
+                                        <span>Coût publicité:</span>
+                                        <span id="costAd">0.00 USD</span>
+                                    </div>
+                                    <div class="cost-row">
+                                        <span>Coût de livraison COD:</span>
+                                        <span id="costCOD">0.00 USD</span>
+                                    </div>
+                                    <div class="cost-row total">
+                                        <span>Total des coûts:</span>
+                                        <span id="costTotal">0.00 USD</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Statistics -->
+                            <div class="result-section">
+                                <h4>Statistiques</h4>
+                                <div class="stats-grid">
+                                    <div class="stat-row">
+                                        <span>Leads nécessaires:</span>
+                                        <span id="statLeads">4</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Commandes confirmées:</span>
+                                        <span id="statConfirmed">2</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Produits livrés:</span>
+                                        <span id="statDelivered">1</span>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Taux de livraison effectif:</span>
+                                        <span id="statRate">25.0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Edit Product Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Modifier le Produit</h2>
+                <button class="modal-close" id="closeModal">×</button>
+            </div>
+            <form id="editForm" class="product-form">
+                <input type="hidden" id="editId">
+
+                <div class="form-group">
+                    <label for="editProductName">Nom du Produit *</label>
+                    <input type="text" id="editProductName" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editBuyPrice">Prix d'Achat (USD) *</label>
+                        <input type="number" id="editBuyPrice" required step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="editSellPrice">Prix de Vente (USD) *</label>
+                        <input type="number" id="editSellPrice" required step="0.01" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editWeight">Poids (grammes)</label>
+                        <input type="number" id="editWeight" step="1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="editProductLink">Lien Produit</label>
+                        <input type="url" id="editProductLink">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Pays Cibles</label>
+                    <div class="countries-grid" id="editCountriesGrid">
+                        <!-- Countries will be inserted here -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Critères de Scoring</label>
+                    <div class="criteria-grid">
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="editCriteriaAudience">
+                            <span class="checkbox-content">
+                                <span class="checkbox-icon">👥</span>
+                                <span class="checkbox-text">Large Audience</span>
+                            </span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="editCriteriaProblem">
+                            <span class="checkbox-content">
+                                <span class="checkbox-icon">🔧</span>
+                                <span class="checkbox-text">Résout un problème</span>
+                            </span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="editCriteriaWow">
+                            <span class="checkbox-content">
+                                <span class="checkbox-icon">✨</span>
+                                <span class="checkbox-text">Effet "Wow"</span>
+                            </span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="editCriteriaCompetition">
+                            <span class="checkbox-content">
+                                <span class="checkbox-icon">🎯</span>
+                                <span class="checkbox-text">Faible Concurrence</span>
+                            </span>
+                        </label>
+                        <label class="checkbox-card">
+                            <input type="checkbox" id="editCriteriaUpsell">
+                            <span class="checkbox-content">
+                                <span class="checkbox-icon">📈</span>
+                                <span class="checkbox-text">Possibilité d'Upsell</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editNotes">Notes</label>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEdit">Annuler</button>
+                    <button type="submit" class="btn btn-primary">💾 Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-message" id="toastMessage">Action réussie!</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
