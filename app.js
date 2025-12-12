@@ -878,6 +878,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeUI();
     setupEventListeners();
     updateDashboard();
+    renderProductsTable();
 });
 
 function initializeUI() {
