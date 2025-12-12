@@ -1617,12 +1617,12 @@ function renderTopProducts() {
 // Products Table
 // ============================================
 
-// Store temporary target profits for products (default 5$)
+// Store temporary target profits for products (default 10$)
 const productTargetProfits = {};
 
-// Get target profit for a product (default 5)
+// Get target profit for a product (default 10)
 function getTargetProfit(productId) {
-    return productTargetProfits[productId] !== undefined ? productTargetProfits[productId] : 5;
+    return productTargetProfits[productId] !== undefined ? productTargetProfits[productId] : 10;
 }
 
 // Adjust target profit for a product
@@ -1752,9 +1752,20 @@ function renderProductsTable(filteredProducts = null) {
     // Render Validated Products (New List)
     renderSpecificTable('validatedProductsBody', 'emptyValidatedProducts', 'validatedProductsTable', validatedProducts, true);
 
-    // Update count badge
+    // Update count badge for validated
     const validatedCountEl = document.getElementById('validatedCount');
     if (validatedCountEl) validatedCountEl.textContent = `${validatedProducts.length} produits`;
+
+    // Update active product count display
+    const activeCountEl = document.getElementById('activeProductCount');
+    if (activeCountEl) {
+        const totalActive = products.filter(p => !p.validated).length;
+        if (filteredProducts) {
+            activeCountEl.textContent = `${activeProducts.length} produits affichés sur ${totalActive} total`;
+        } else {
+            activeCountEl.textContent = `${activeProducts.length} produits`;
+        }
+    }
 }
 
 // Helper to render a specific product table
