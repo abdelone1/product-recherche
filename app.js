@@ -1845,6 +1845,7 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
             <td><strong>${escapeHtml(product.name)}</strong></td>
             <td>${product.date}</td>
             <td>${formatSocialIcons(product.name)}</td>
+            <td>${product.link ? `<a href="${product.link}" target="_blank" class="chosen-product-link" title="${product.link}">🔗 Voir</a>` : '<span style="color: var(--text-muted);">-</span>'}</td>
             <td>${formatPrice(buyPrice)}</td>
             <td>${product.weight ? product.weight + 'g' : '-'}</td>
             
