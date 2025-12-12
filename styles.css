@@ -1679,18 +1679,19 @@ body {
 
 .social-icons {
     display: flex;
-    gap: 10px;
+    gap: 4px;
     align-items: center;
+    flex-wrap: nowrap;
 }
 
 .social-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    font-size: 15px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    font-size: 12px;
     text-decoration: none;
     transition: all var(--transition-fast);
     cursor: pointer;
