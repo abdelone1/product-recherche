@@ -889,7 +889,7 @@ const SAMPLE_PRODUCTS = [
         createdAt: new Date().toISOString()
     },
     {
-        id: '51',
+        id: 'ramadan-2025-led-' + Date.now(),
         name: 'Guirlande LED Lune/Étoile Ramadan',
         buyPrice: '2.50',
         sellPrice: '16.00',
