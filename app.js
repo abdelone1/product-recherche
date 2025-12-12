@@ -1811,9 +1811,14 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
     table.style.display = 'table';
     emptyState.style.display = 'none';
 
-    const sortedProducts = [...productList].sort((a, b) =>
-        new Date(b.createdAt) - new Date(a.createdAt)
-    );
+    const sortedProducts = [...productList].sort((a, b) => {
+        // Primary sort by date (newest first)
+        const dateA = new Date(a.date || a.createdAt);
+        const dateB = new Date(b.date || b.createdAt);
+        if (dateB - dateA !== 0) return dateB - dateA;
+        // Secondary sort by id for stable ordering
+        return String(a.id).localeCompare(String(b.id));
+    });
 
     tbody.innerHTML = sortedProducts.map(product => {
         const buyPrice = parseFloat(product.buyPrice) || 0;
