@@ -945,6 +945,7 @@ function setupEventListeners() {
     // Export buttons
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
     document.getElementById('exportAllBtn')?.addEventListener('click', exportToCSV);
+    document.getElementById('backupBtn')?.addEventListener('click', exportToJSON);
 
     // Import button
     document.getElementById('importBtn')?.addEventListener('click', () => {
@@ -1764,6 +1765,28 @@ function formatCountriesForCSV(codes) {
         const country = CONFIG.COUNTRIES.find(c => c.code === code);
         return country ? country.name : code;
     }).join(', ');
+}
+
+function exportToJSON() {
+    if (products.length === 0) {
+        showToast('Aucun produit à exporter!');
+        return;
+    }
+
+    const dataStr = JSON.stringify(products, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backup_products_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast('Sauvegarde JSON réussie!');
 }
 
 // ============================================
