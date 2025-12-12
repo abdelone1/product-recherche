@@ -18,6 +18,26 @@
 </head>
 
 <body>
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h2>🔐 Connexion</h2>
+            <p>Entrez vos identifiants pour accéder à l'outil.</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginUsername">Nom d'utilisateur</label>
+                    <input type="text" id="loginUsername" placeholder="abdel ou yousf" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Mot de passe</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <p class="login-error" id="loginError" style="display:none; color: #e74c3c;">Identifiants incorrects</p>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Se Connecter</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -57,6 +77,10 @@
                 <span class="nav-icon">⚙️</span>
                 <span class="nav-text">Paramètres</span>
             </a>
+            <a href="#history" class="nav-item" data-section="history">
+                <span class="nav-icon">📜</span>
+                <span class="nav-text">Historique</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -76,6 +100,8 @@
                 <p class="header-subtitle" id="pageSubtitle">Vue d'ensemble de vos produits</p>
             </div>
             <div class="header-actions">
+                <span class="user-badge" id="currentUserBadge"
+                    style="margin-right: 10px; padding: 5px 12px; background: var(--primary); color: white; border-radius: 20px; font-size: 0.85rem;"></span>
                 <button class="btn btn-primary" id="quickAddBtn">
                     <span>+</span> Ajouter Produit
                 </button>
@@ -732,6 +758,36 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section class="section hidden" id="history-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📜 Historique des Actions</h2>
+                    <p>Consultez toutes les modifications effectuées sur les produits.</p>
+                </div>
+                <div class="table-container">
+                    <table class="products-table" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>Date &amp; Heure</th>
+                                <th>Utilisateur</th>
+                                <th>Action</th>
+                                <th>Produit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <!-- History rows will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyHistory" style="display: none;">
+                        <div class="empty-icon">📜</div>
+                        <h3>Aucune action enregistrée</h3>
+                        <p>Les actions sur les produits apparaîtront ici.</p>
                     </div>
                 </div>
             </div>

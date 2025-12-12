@@ -49,6 +49,15 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 console.log("⚡ Supabase initialized!");
 
+// ============================================
+// User Accounts (Simple Auth)
+// ============================================
+const USERS = {
+    'abdel': 'abdel123',
+    'yousf': 'yousf123'
+};
+
+let currentUser = sessionStorage.getItem('productResearchUser') || null;
 
 // ============================================
 // State Management
@@ -886,12 +895,103 @@ const SAMPLE_PRODUCTS = [
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication FIRST
+    checkAuth();
+
+    // Setup login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
     loadProducts();
     initializeUI();
     setupEventListeners();
-    // loadProducts() starts the listener which will call updateDashboard
-    loadProducts();
 });
+
+function checkAuth() {
+    const overlay = document.getElementById('loginOverlay');
+    const userBadge = document.getElementById('currentUserBadge');
+
+    if (currentUser) {
+        // User is logged in
+        if (overlay) overlay.classList.add('hidden');
+        if (userBadge) userBadge.textContent = `👤 ${currentUser}`;
+    } else {
+        // User is NOT logged in, show overlay
+        if (overlay) overlay.classList.remove('hidden');
+        if (userBadge) userBadge.textContent = '';
+    }
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value.toLowerCase().trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorEl = document.getElementById('loginError');
+
+    if (USERS[username] && USERS[username] === password) {
+        currentUser = username;
+        sessionStorage.setItem('productResearchUser', username);
+        checkAuth();
+        showToast(`Bienvenue, ${username} !`);
+    } else {
+        if (errorEl) errorEl.style.display = 'block';
+    }
+}
+
+function logActivity(action, productName) {
+    if (!currentUser) return; // Don't log if no user
+
+    supabase.from('activity_logs').insert([{
+        username: currentUser,
+        action: action,
+        product_name: productName || 'N/A'
+    }]).then(({ error }) => {
+        if (error) console.error('Log error:', error);
+    });
+}
+
+function loadActivityLogs() {
+    supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(100)
+        .then(({ data, error }) => {
+            if (error) {
+                console.error('Error loading logs:', error);
+                return;
+            }
+
+            const tbody = document.getElementById('historyBody');
+            const emptyState = document.getElementById('emptyHistory');
+            const table = document.getElementById('historyTable');
+
+            if (!tbody || !table) return;
+
+            if (!data || data.length === 0) {
+                table.style.display = 'none';
+                if (emptyState) emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            if (emptyState) emptyState.style.display = 'none';
+
+            tbody.innerHTML = data.map(log => {
+                const date = new Date(log.created_at);
+                const formattedDate = date.toLocaleString('fr-FR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+                return `
+                <tr>
+                    <td>${formattedDate}</td>
+                    <td><strong>${escapeHtml(log.username)}</strong></td>
+                    <td>${escapeHtml(log.action)}</td>
+                    <td>${escapeHtml(log.product_name || '-')}</td>
+                </tr>
+                `;
+            }).join('');
+        });
+}
 
 function initializeUI() {
     // Initialize countries grid in Add form
@@ -1046,7 +1146,8 @@ function navigateToSection(sectionId) {
         'products': { title: 'Mes Produits', subtitle: 'Gérer tous vos produits' },
         'validated-products': { title: 'Produits Validés', subtitle: 'Vos produits gagnants' },
         'facebook-ads': { title: 'Facebook Ads', subtitle: 'Rechercher des produits gagnants' },
-        'settings': { title: 'Paramètres', subtitle: 'Configurer l\'application' }
+        'settings': { title: 'Paramètres', subtitle: 'Configurer l\'application' },
+        'history': { title: 'Historique', subtitle: 'Traçabilité des actions' }
     };
 
     if (titles[sectionId]) {
@@ -1060,6 +1161,9 @@ function navigateToSection(sectionId) {
     // Refresh data if needed
     if (sectionId === 'products') {
         renderProductsTable();
+    }
+    if (sectionId === 'history') {
+        loadActivityLogs();
     }
 }
 
@@ -1230,6 +1334,7 @@ function handleProductSubmit(e) {
         .then(({ error }) => {
             if (error) throw error;
             showToast('Produit ajouté (Cloud) !');
+            logActivity('Ajout', formData.name);
             e.target.reset();
             resetScorePreview();
             navigateToSection('products');
@@ -1335,6 +1440,7 @@ function handleEditSubmit(e) {
             updateDashboard();
 
             showToast('Produit modifié (Cloud) !');
+            logActivity('Modification', updatedData.name);
             closeEditModal();
         })
         .catch((error) => {
@@ -1348,11 +1454,15 @@ function handleEditSubmit(e) {
 // ============================================
 
 function deleteProduct(productId) {
+    const productToDelete = products.find(p => p.id === productId);
+    const productName = productToDelete ? productToDelete.name : 'Inconnu';
+
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
         supabase.from('products').delete().eq('id', productId)
             .then(({ error }) => {
                 if (error) throw error;
                 showToast('Produit supprimé (Cloud) !');
+                logActivity('Suppression', productName);
             })
             .catch((error) => {
                 console.error("Error deleting product: ", error);
@@ -1706,6 +1816,7 @@ function validateProduct(productId) {
         renderProductsTable(); // Move instantly from Active to Validated list
         updateDashboard();
         showToast('✅ Produit validé !');
+        logActivity('Validation', product.name);
     }
 
     // 2. Send to Cloud (Background)
