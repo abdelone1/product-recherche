@@ -1829,7 +1829,6 @@ function validateProduct(productId) {
             }
         });
 }
-}
 
 function filterProducts() {
     const searchTerm = document.getElementById('searchProducts').value.toLowerCase();
