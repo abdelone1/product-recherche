@@ -69,6 +69,10 @@
                 <span class="nav-icon">✅</span>
                 <span class="nav-text">Produits Validés</span>
             </a>
+            <a href="#declined-products" class="nav-item" data-section="declined-products">
+                <span class="nav-icon">❌</span>
+                <span class="nav-text">Produits Déclinés</span>
+            </a>
             <a href="#simulator" class="nav-item" data-section="simulator">
                 <span class="nav-icon">🧮</span>
                 <span class="nav-text">Simulateur COD</span>
@@ -408,6 +412,37 @@
                         <span class="empty-icon">🏆</span>
                         <p>Aucun produit validé pour le moment</p>
                         <p class="empty-hint">Validez des produits depuis votre liste "Mes Produits"</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Declined Products Section -->
+        <section class="section hidden" id="declined-products-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>❌ Produits Déclinés</h2>
+                    <div class="header-actions">
+                        <span class="badge badge-danger" id="declinedCount">0 produits</span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="declinedProductsTable">
+                        <thead>
+                            <tr>
+                                <th>Produit</th>
+                                <th>Date Décliné</th>
+                                <th>Raison</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="declinedProductsBody">
+                            <!-- Declined products will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyDeclinedProducts">
+                        <span class="empty-icon">🗑️</span>
+                        <p>Aucun produit décliné</p>
                     </div>
                 </div>
             </div>

@@ -1169,6 +1169,7 @@ function navigateToSection(sectionId) {
         'add-product': { title: 'Ajouter Produit', subtitle: 'Enregistrer un nouveau produit' },
         'products': { title: 'Mes Produits', subtitle: 'Gérer tous vos produits' },
         'validated-products': { title: 'Produits Validés', subtitle: 'Vos produits gagnants' },
+        'declined-products': { title: 'Produits Déclinés', subtitle: 'Produits non retenus' },
         'facebook-ads': { title: 'Facebook Ads', subtitle: 'Rechercher des produits gagnants' },
         'settings': { title: 'Paramètres', subtitle: 'Configurer l\'application' },
         'history': { title: 'Historique', subtitle: 'Traçabilité des actions' }
@@ -1188,6 +1189,9 @@ function navigateToSection(sectionId) {
     }
     if (sectionId === 'history') {
         loadActivityLogs();
+    }
+    if (sectionId === 'declined-products') {
+        renderDeclinedProducts();
     }
 }
 
@@ -1742,9 +1746,9 @@ function formatPrice(usdAmount, currency = currentCurrency) {
 function renderProductsTable(filteredProducts = null) {
     const allProducts = filteredProducts || products;
 
-    // Split products
-    const activeProducts = allProducts.filter(p => !p.validated);
-    const validatedProducts = allProducts.filter(p => p.validated);
+    // Split products (exclude declined from active and validated)
+    const activeProducts = allProducts.filter(p => !p.validated && !p.declined);
+    const validatedProducts = allProducts.filter(p => p.validated && !p.declined);
 
     // Render Active Products (Main List)
     renderSpecificTable('allProductsBody', 'emptyProducts', 'allProductsTable', activeProducts, false);
@@ -1801,17 +1805,17 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
         // Common Buttons
         const btnSimulator = `<button class="action-btn simulator" onclick="openSimulatorForProduct('${product.id}')" title="Simulateur COD">🧮</button>`;
         const btnEdit = `<button class="action-btn edit" onclick="openEditModal('${product.id}')" title="Modifier">✏️</button>`;
-        const btnDelete = `<button class="action-btn delete" onclick="deleteProduct('${product.id}')" title="Supprimer">🗑️</button>`;
+        const btnDecline = `<button class="action-btn decline" onclick="declineProduct('${product.id}')" title="Décliner" style="background: #e53e3e;">❌</button>`;
 
         if (isValidated) {
-            // Validated List: Show LINK + Common
+            // Validated List: Show RETURN + LINK + Common
+            const btnReturn = `<button class="action-btn return" onclick="unvalidateProduct('${product.id}')" title="Remettre en liste active">↩️</button>`;
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
-            actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnDelete}`;
+            actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
         } else {
-            // Main List: Show VALIDATE + Common (Start)
-            // User requested replacement of Link by Validate
+            // Main List: Show VALIDATE + DECLINE + Common
             const btnValidate = `<button class="action-btn validate" onclick="validateProduct('${product.id}')" title="Valider ce produit">✅</button>`;
-            actionButtons = `${btnSimulator} ${btnEdit} ${btnValidate} ${btnDelete}`;
+            actionButtons = `${btnSimulator} ${btnEdit} ${btnValidate} ${btnDecline}`;
         }
 
         return `
@@ -1863,6 +1867,117 @@ function validateProduct(productId) {
                 // Revert if needed, but for validation simple toast is usually enough
             }
         });
+}
+
+// Function to decline a product (moves to declined with reason)
+function declineProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const reason = prompt(`Pourquoi décliner "${product.name}" ?`, 'Pas rentable');
+    if (reason === null) return; // User cancelled
+
+    // 1. Optimistic Update
+    product.declined = true;
+    product.declineReason = reason;
+    product.declinedAt = new Date().toISOString();
+    renderProductsTable();
+    renderDeclinedProducts();
+    updateDashboard();
+    showToast('❌ Produit décliné');
+    logActivity('Décliné', product.name + ' - ' + reason);
+
+    // 2. Send to Cloud
+    supabase.from('products').update({
+        declined: true,
+        declineReason: reason,
+        declinedAt: new Date().toISOString()
+    }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) console.error('Decline error:', error);
+        });
+}
+
+// Function to return a validated product to active list
+function unvalidateProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    // 1. Optimistic Update
+    product.validated = false;
+    renderProductsTable();
+    updateDashboard();
+    showToast('↩️ Produit remis en liste active');
+    logActivity('Annulation validation', product.name);
+
+    // 2. Send to Cloud
+    supabase.from('products').update({ validated: false }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) console.error('Unvalidate error:', error);
+        });
+}
+
+// Function to restore a declined product to active list
+function restoreProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    // 1. Optimistic Update
+    product.declined = false;
+    product.declineReason = null;
+    product.declinedAt = null;
+    renderProductsTable();
+    renderDeclinedProducts();
+    updateDashboard();
+    showToast('♻️ Produit restauré');
+    logActivity('Restauration', product.name);
+
+    // 2. Send to Cloud
+    supabase.from('products').update({
+        declined: false,
+        declineReason: null,
+        declinedAt: null
+    }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) console.error('Restore error:', error);
+        });
+}
+
+// Render declined products table
+function renderDeclinedProducts() {
+    const declinedProducts = products.filter(p => p.declined);
+    const tbody = document.getElementById('declinedProductsBody');
+    const emptyState = document.getElementById('emptyDeclinedProducts');
+    const table = document.getElementById('declinedProductsTable');
+
+    if (!tbody || !table) return;
+
+    // Update count badge
+    const countEl = document.getElementById('declinedCount');
+    if (countEl) countEl.textContent = `${declinedProducts.length} produits`;
+
+    if (declinedProducts.length === 0) {
+        table.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+
+    table.style.display = 'table';
+    if (emptyState) emptyState.style.display = 'none';
+
+    tbody.innerHTML = declinedProducts.map(product => {
+        const declinedDate = product.declinedAt ? new Date(product.declinedAt).toLocaleDateString('fr-FR') : '-';
+        return `
+        <tr>
+            <td><strong>${escapeHtml(product.name)}</strong></td>
+            <td>${declinedDate}</td>
+            <td>${escapeHtml(product.declineReason || '-')}</td>
+            <td>
+                <button class="btn btn-sm btn-secondary" onclick="restoreProduct('${product.id}')" title="Restaurer">♻️</button>
+            </td>
+        </tr>
+        `;
+    }).join('');
 }
 
 function filterProducts() {
