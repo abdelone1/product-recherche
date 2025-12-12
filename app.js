@@ -1114,6 +1114,15 @@ function setupEventListeners() {
     // Search and filters
     document.getElementById('searchProducts').addEventListener('input', filterProducts);
     document.getElementById('filterScore').addEventListener('change', filterProducts);
+
+    // Decline Modal Listeners
+    const closeDeclineBtn = document.getElementById('closeDeclineModal');
+    const cancelDeclineBtn = document.getElementById('cancelDecline');
+    const confirmDeclineBtn = document.getElementById('confirmDecline');
+
+    if (closeDeclineBtn) closeDeclineBtn.addEventListener('click', closeDeclineModal);
+    if (cancelDeclineBtn) cancelDeclineBtn.addEventListener('click', closeDeclineModal);
+    if (confirmDeclineBtn) confirmDeclineBtn.addEventListener('click', confirmDeclineProduct);
 }
 
 function setupScoreCalculation() {
@@ -1869,13 +1878,31 @@ function validateProduct(productId) {
         });
 }
 
-// Function to decline a product (moves to declined with reason)
+// Function to decline a product (opens modal)
+let currentDeclineId = null;
+
 function declineProduct(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
-    const reason = prompt(`Pourquoi décliner "${product.name}" ?`, 'Pas rentable');
-    if (reason === null) return; // User cancelled
+    currentDeclineId = productId;
+    document.getElementById('declineProductName').textContent = `Produit: "${product.name}"`;
+    document.getElementById('declineReason').value = '';
+    document.getElementById('declineModal').classList.add('active');
+}
+
+function closeDeclineModal() {
+    document.getElementById('declineModal').classList.remove('active');
+    currentDeclineId = null;
+}
+
+function confirmDeclineProduct() {
+    if (!currentDeclineId) return;
+
+    const product = products.find(p => p.id === currentDeclineId);
+    if (!product) return;
+
+    const reason = document.getElementById('declineReason').value.trim() || 'Aucune raison spécifiée';
 
     // 1. Optimistic Update
     product.declined = true;
@@ -1885,17 +1912,19 @@ function declineProduct(productId) {
     renderDeclinedProducts();
     updateDashboard();
     showToast('❌ Produit décliné');
-    logActivity('Décliné', product.name + ' - ' + reason);
+    logActivity('Décliné', product.name + (reason !== 'Aucune raison spécifiée' ? ' - ' + reason : ''));
 
     // 2. Send to Cloud
     supabase.from('products').update({
         declined: true,
         declineReason: reason,
         declinedAt: new Date().toISOString()
-    }).eq('id', productId)
+    }).eq('id', currentDeclineId)
         .then(({ error }) => {
             if (error) console.error('Decline error:', error);
         });
+
+    closeDeclineModal();
 }
 
 // Function to return a validated product to active list
@@ -1966,15 +1995,32 @@ function renderDeclinedProducts() {
     if (emptyState) emptyState.style.display = 'none';
 
     tbody.innerHTML = declinedProducts.map(product => {
-        const declinedDate = product.declinedAt ? new Date(product.declinedAt).toLocaleDateString('fr-FR') : '-';
+        const buyPrice = parseFloat(product.buyPrice) || 0;
+        const weight = product.weight || '-';
+
+        // Country flags
+        const countryFlags = product.countries && product.countries.length > 0
+            ? product.countries.map(code => {
+                const country = CONFIG.COUNTRIES.find(c => c.code === code);
+                return country ? country.flag : '';
+            }).join(' ')
+            : '-';
+
+        // Action buttons
+        const btnSimulator = `<button class="action-btn simulator" onclick="openSimulatorForProduct('${product.id}')" title="Simulateur COD">🧮</button>`;
+        const btnEdit = `<button class="action-btn edit" onclick="openEditModal('${product.id}')" title="Modifier">✏️</button>`;
+        const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
+        const btnRestore = `<button class="action-btn restore" onclick="restoreProduct('${product.id}')" title="Restaurer" style="background: #48bb78;">♻️</button>`;
+
         return `
         <tr>
             <td><strong>${escapeHtml(product.name)}</strong></td>
-            <td>${declinedDate}</td>
-            <td>${escapeHtml(product.declineReason || '-')}</td>
-            <td>
-                <button class="btn btn-sm btn-secondary" onclick="restoreProduct('${product.id}')" title="Restaurer">♻️</button>
-            </td>
+            <td>${product.date || '-'}</td>
+            <td>${countryFlags}</td>
+            <td>${formatPrice(buyPrice)}</td>
+            <td>${weight}g</td>
+            <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(product.declineReason || '-')}</td>
+            <td>${btnSimulator} ${btnEdit} ${btnLink} ${btnRestore}</td>
         </tr>
         `;
     }).join('');

@@ -431,8 +431,11 @@
                         <thead>
                             <tr>
                                 <th>Produit</th>
-                                <th>Date Décliné</th>
-                                <th>Raison</th>
+                                <th>Date</th>
+                                <th>Réseaux</th>
+                                <th>Prix Achat</th>
+                                <th>Poids</th>
+                                <th>Raison Déclin</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -941,6 +944,29 @@
                     <button type="submit" class="btn btn-primary">💾 Sauvegarder</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Decline Modal -->
+    <div class="modal" id="declineModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>❌ Décliner le produit</h2>
+                <button class="modal-close" id="closeDeclineModal">×</button>
+            </div>
+            <div style="padding: 24px;">
+                <p id="declineProductName" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
+                <div class="form-group">
+                    <label for="declineReason">Raison (optionnel)</label>
+                    <textarea id="declineReason" rows="3"
+                        placeholder="Ex: Pas rentable, trop cher, mauvaise qualité..."></textarea>
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" id="cancelDecline">Annuler</button>
+                    <button type="button" class="btn btn-danger" id="confirmDecline">❌ Décliner</button>
+                </div>
+            </div>
         </div>
     </div>
 
