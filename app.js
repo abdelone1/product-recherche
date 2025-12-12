@@ -1687,19 +1687,18 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
 }
 
 // Function to validate a product
+// Function to validate a product
 function validateProduct(productId) {
-    const product = products.find(p => p.id === productId);
-    if (!product) return;
-
-    product.validated = true;
-    saveProducts();
-    renderProductsTable();
-    updateDashboard(); // Update stats if needed
-
-    // Show feedback
-    showToast(`✅ Produit "${product.name}" validé !`);
-
-    // Check if we should switch view? No, let user stay in list.
+    supabase.from('products').update({ validated: true }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) {
+                console.error("Error validating product: ", error);
+                showToast('Erreur lors de la validation');
+            } else {
+                showToast('✅ Produit validé (Cloud) !');
+                // View updates automatically via real-time listener
+            }
+        });
 }
 
 function filterProducts() {
