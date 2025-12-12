@@ -448,34 +448,40 @@
                         <div class="countries-settings" id="countriesSettings">
                             <!-- Country settings will be inserted here -->
                         </div>
-                    </div>
 
-                    <div class="setting-group">
-                        <h3>💾 Données</h3>
-                        <div class="data-actions">
-                            <button class="btn btn-secondary" id="exportAllBtn">
-                                📥 Exporter CSV (Excel)
-                            </button>
-                            <button class="btn btn-primary" id="backupBtn">
-                                💾 Sauvegarder pour Partage (JSON)
-                            </button>
-                            <button class="btn btn-secondary" id="importBtn">
-                                📤 Importer des données (JSON)
-                            </button>
-                            <input type="file" id="importFile" accept=".json" style="display: none;">
-                            <button class="btn btn-danger" id="clearDataBtn">
-                                🗑️ Effacer toutes les données
-                            </button>
+                        <div class="setting-group">
+                            <h3>💾 Données</h3>
+                            <div class="settings-card">
+                                <h3>📦 Gestion des Données</h3>
+                                <p>Gérez vos données locales et exportez-les.</p>
+                                <div class="settings-actions">
+                                    <button id="backupBtn" class="btn btn-secondary">
+                                        <i class="fas fa-file-export"></i> Sauvegarder (JSON)
+                                    </button>
+                                    <label for="importFile" class="btn btn-secondary">
+                                        <i class="fas fa-file-import"></i> Importer
+                                    </label>
+                                    <input type="file" id="importFile" accept=".json" hidden>
+
+                                    <button id="restoreDemoBtn" class="btn btn-primary"
+                                        style="background-color: #8e44ad;">
+                                        <i class="fas fa-magic"></i> Restaurer Produits Démo
+                                    </button>
+
+                                    <button onclick="handleClearData()" class="btn btn-danger">
+                                        <i class="fas fa-trash"></i> Tout Effacer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>ℹ️ À propos</h3>
+                            <p>Product Research Tool v1.0</p>
+                            <p>Outil gratuit pour identifier les produits prometteurs à vendre en Afrique.</p>
                         </div>
                     </div>
-
-                    <div class="setting-group">
-                        <h3>ℹ️ À propos</h3>
-                        <p>Product Research Tool v1.0</p>
-                        <p>Outil gratuit pour identifier les produits prometteurs à vendre en Afrique.</p>
-                    </div>
                 </div>
-            </div>
         </section>
 
         <!-- Simulator COD Section -->

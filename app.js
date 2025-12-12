@@ -956,17 +956,36 @@ function setupEventListeners() {
 
     // Export buttons
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
-    document.getElementById('exportAllBtn')?.addEventListener('click', exportToCSV);
-    document.getElementById('backupBtn')?.addEventListener('click', exportToJSON);
+    const exportAllBtn = document.getElementById('exportAllBtn');
+    if (exportAllBtn) exportAllBtn.addEventListener('click', exportToCSV);
 
-    // Import button
-    document.getElementById('importBtn')?.addEventListener('click', () => {
-        document.getElementById('importFile').click();
-    });
-    document.getElementById('importFile')?.addEventListener('change', handleImport);
+    // Backup JSON
+    const backupBtn = document.getElementById('backupBtn');
+    if (backupBtn) backupBtn.addEventListener('click', exportToJSON);
+
+    // Import JSON (File)
+    const fileInput = document.getElementById('importFile');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleImport);
+    }
+
+    // Restore Demo Products (New)
+    const restoreBtn = document.getElementById('restoreDemoBtn');
+    if (restoreBtn) {
+        restoreBtn.addEventListener('click', restoreDemoData);
+    }
+
+    // Legacy Import Button (if exists)
+    const importBtn = document.getElementById('importBtn');
+    if (importBtn) {
+        importBtn.addEventListener('click', () => {
+            document.getElementById('importFile').click();
+        });
+    }
 
     // Clear data button
-    document.getElementById('clearDataBtn')?.addEventListener('click', handleClearData);
+    const clearDataBtn = document.getElementById('clearDataBtn');
+    if (clearDataBtn) clearDataBtn.addEventListener('click', handleClearData);
 
     // Search and filters
     document.getElementById('searchProducts').addEventListener('input', filterProducts);
@@ -1927,6 +1946,27 @@ function handleClearData() {
 // ============================================
 // Utilities
 // ============================================
+
+function restoreDemoData() {
+    if (confirm('Voulez-vous recharger les 60 produits d\'exemple dans Supabase ?')) {
+        showToast('Restauration en cours...');
+        const samplesToInsert = SAMPLE_PRODUCTS.map(p => ({
+            ...p,
+            validated: false
+        }));
+
+        supabase.from('products').insert(samplesToInsert)
+            .then(({ error }) => {
+                if (error) {
+                    console.error(error);
+                    showToast('Erreur: ' + error.message);
+                } else {
+                    showToast('Succès ! Produits restaurés.');
+                    loadProducts(); // Refresh view
+                }
+            });
+    }
+}
 
 function formatCountries(codes) {
     if (!codes || codes.length === 0) return '-';
