@@ -887,6 +887,22 @@ const SAMPLE_PRODUCTS = [
         profit: 27.00,
         date: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString()
+    },
+    {
+        id: '51',
+        name: 'Guirlande LED Lune/Étoile Ramadan',
+        buyPrice: '2.50',
+        sellPrice: '16.00',
+        weight: '150',
+        link: 'https://www.alibaba.com/trade/search?SearchText=ramadan+led+moon+star+lights',
+        countries: ['SN', 'CI', 'ML', 'NE', 'BF', 'TG'],
+        criteria: { audience: true, problem: false, wow: true, competition: true, upsell: true },
+        notes: 'RAMADAN 2025 🌙 Très viral sur TikTok. Décoration festive, effet WOW. Upsell: pack famille 2-3 pièces. Timing parfait avant Ramadan (février-mars).',
+        score: 95,
+        grade: 'A',
+        profit: 13.50,
+        date: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toISOString()
     }
 ];
 
