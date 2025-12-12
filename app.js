@@ -39,28 +39,6 @@ const CONFIG = {
 };
 
 // ============================================
-// Firebase Integration
-// ============================================
-
-const firebaseConfig = {
-    apiKey: "AIzaSyBo0huUr1Zv-sRzm2W7eituhQGzQLLMuFg",
-    authDomain: "product-recherche.firebaseapp.com",
-    projectId: "product-recherche",
-    storageBucket: "product-recherche.firebasestorage.app",
-    messagingSenderId: "409162667886",
-    appId: "1:409162667886:web:c53880591f86afe414d37f",
-    measurementId: "G-3M4MQ5LEFZ"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const analytics = firebase.analytics();
-
-console.log("🔥 Firebase initialized!");
-
-
-// ============================================
 // State Management
 // ============================================
 
@@ -899,9 +877,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProducts();
     initializeUI();
     setupEventListeners();
-    // loadProducts() starts the listener which will call updateDashboard
     loadProducts();
-    // updateDashboard(); // Removed as loadProducts/listener will trigger it
+    initializeUI();
+    setupEventListeners();
+    updateDashboard();
+    renderProductsTable();
 });
 
 function initializeUI() {
@@ -1216,18 +1196,16 @@ function handleProductSubmit(e) {
         createdAt: new Date().toISOString()
     };
 
-    // Save to Firestore
-    db.collection('products').doc(product.id).set(product)
-        .then(() => {
-            showToast('Produit ajouté (Cloud) !');
-            e.target.reset();
-            resetScorePreview();
-            navigateToSection('products');
-        })
-        .catch((error) => {
-            console.error("Error adding document: ", error);
-            showToast('Erreur lors de l\'ajout');
-        });
+    products.push(product);
+    saveProducts();
+    updateDashboard();
+
+    showToast('Produit ajouté avec succès!');
+    e.target.reset();
+    resetScorePreview();
+
+    // Navigate to products list
+    navigateToSection('products');
 }
 
 // ============================================
@@ -1311,16 +1289,11 @@ function handleEditSubmit(e) {
         profit
     };
 
-    // Update Firestore
-    db.collection('products').doc(currentEditId).update(products[productIndex])
-        .then(() => {
-            showToast('Produit modifié (Cloud) !');
-            closeEditModal();
-        })
-        .catch((error) => {
-            console.error("Error updating document: ", error);
-            showToast('Erreur lors de la modification');
-        });
+    saveProducts();
+    updateDashboard();
+    renderProductsTable();
+    closeEditModal();
+    showToast('Produit modifié avec succès!');
 }
 
 // ============================================
@@ -1329,14 +1302,11 @@ function handleEditSubmit(e) {
 
 function deleteProduct(productId) {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
-        db.collection('products').doc(productId).delete()
-            .then(() => {
-                showToast('Produit supprimé (Cloud) !');
-            })
-            .catch((error) => {
-                console.error("Error removing document: ", error);
-                showToast('Erreur lors de la suppression');
-            });
+        products = products.filter(p => p.id !== productId);
+        saveProducts();
+        updateDashboard();
+        renderProductsTable();
+        showToast('Produit supprimé!');
     }
 }
 
@@ -1718,53 +1688,26 @@ function filterProducts() {
 // ============================================
 
 function saveProducts() {
-    // Deprecated: Data is now saved directly to Firestore
+    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(products));
 }
 
 function loadProducts() {
-    // 1. Migration: Check for local data and move to Cloud
     const stored = localStorage.getItem(CONFIG.STORAGE_KEY);
     if (stored) {
         try {
-            const localProducts = JSON.parse(stored);
-            if (localProducts.length > 0) {
-                showToast('Migration vers le Cloud en cours...');
-                const batch = db.batch();
-                localProducts.forEach(p => {
-                    const docId = p.id || Date.now().toString();
-                    const ref = db.collection('products').doc(docId);
-                    batch.set(ref, p);
-                });
-                batch.commit().then(() => {
-                    console.log('Migration complete');
-                    localStorage.removeItem(CONFIG.STORAGE_KEY);
-                    showToast('Migration terminée ! Vos données sont dans le Cloud.');
-                });
-            }
+            products = JSON.parse(stored);
         } catch (e) {
-            console.error('Migration error:', e);
+            console.error('Error loading products:', e);
+            products = [];
         }
     }
 
-    // 2. Real-time Listener
-    db.collection('products').onSnapshot((snapshot) => {
-        products = snapshot.docs.map(doc => ({
-            ...doc.data(),
-            id: doc.id
-        }));
-
-        updateDashboard();
-        renderProductsTable();
-
-        // Update valid count badge specifically if needed
-        const validCount = products.filter(p => p.validated).length;
-        const badge = document.getElementById('validatedCount');
-        if (badge) badge.textContent = `${validCount} produits`;
-
-    }, (error) => {
-        console.error("Error getting documents: ", error);
-        showToast("Erreur connexion Cloud (Hors ligne ?)");
-    });
+    // If no products, load sample products
+    if (products.length === 0 && SAMPLE_PRODUCTS) {
+        products = [...SAMPLE_PRODUCTS];
+        saveProducts();
+        console.log('Sample products loaded!');
+    }
 }
 
 // ============================================
@@ -1861,29 +1804,14 @@ function handleImport(e) {
     reader.onload = function (event) {
         try {
             const imported = JSON.parse(event.target.result);
-            if (Array.isArray(imported) && imported.length > 0) {
-                showToast(`Import de ${imported.length} produits en cours vers le Cloud...`);
-
-                const batch = db.batch();
-                imported.forEach(p => {
-                    // Generate ID if missing or ensure uniqueness
-                    const docId = p.id || (Date.now().toString() + Math.random().toString(36).substr(2, 5));
-                    const ref = db.collection('products').doc(docId);
-                    // Ensure ID is part of the document
-                    batch.set(ref, { ...p, id: docId });
-                });
-
-                batch.commit()
-                    .then(() => {
-                        showToast('Import terminé avec succès (Cloud) !');
-                    })
-                    .catch(err => {
-                        console.error("Batch write failed: ", err);
-                        showToast('Erreur lors de l\'enregistrement cloud');
-                    });
+            if (Array.isArray(imported)) {
+                products = [...products, ...imported];
+                saveProducts();
+                updateDashboard();
+                renderProductsTable();
+                showToast(`${imported.length} produits importés!`);
             }
         } catch (err) {
-            console.error(err);
             showToast('Erreur lors de l\'import!');
         }
     };
@@ -1896,19 +1824,12 @@ function handleImport(e) {
 // ============================================
 
 function handleClearData() {
-    if (confirm('⚠️ ATTENTION : Cela va supprimer TOUTES les données du Cloud pour tout le monde. Continuer ?')) {
-        db.collection('products').get().then(snapshot => {
-            const batch = db.batch();
-            snapshot.docs.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            return batch.commit();
-        }).then(() => {
-            showToast('Base de données Cloud entièrement effacée !');
-        }).catch(err => {
-            console.error("Clear failed: ", err);
-            showToast('Erreur lors de la suppression');
-        });
+    if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer TOUTES les données? Cette action est irréversible!')) {
+        products = [];
+        saveProducts();
+        updateDashboard();
+        renderProductsTable();
+        showToast('Toutes les données ont été effacées!');
     }
 }
 
