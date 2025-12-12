@@ -1325,12 +1325,21 @@ function handleEditSubmit(e) {
     supabase.from('products').update(updatePayload).eq('id', currentEditId)
         .then(({ error }) => {
             if (error) throw error;
+
+            // OPTIMISTIC UPDATE: Update local state immediately
+            if (productIndex !== -1) {
+                products[productIndex] = { ...products[productIndex], ...updatePayload };
+            }
+
+            renderProductsTable(); // Update UI immediately
+            updateDashboard();
+
             showToast('Produit modifié (Cloud) !');
             closeEditModal();
         })
         .catch((error) => {
             console.error("Error updating product: ", error);
-            showToast('Erreur lors de la modification');
+            showToast('Erreur lors de la modification: ' + error.message);
         });
 }
 
