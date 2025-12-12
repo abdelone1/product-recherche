@@ -1736,6 +1736,7 @@ function loadProducts() {
                             showToast('Migration terminée ! Données dans le Cloud.');
                         } else {
                             console.error('Migration partial error:', error);
+                            showToast('Erreur chargement exemples: ' + error.message);
                             // Keep local storage if error, to be safe
                         }
                     });
