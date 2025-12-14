@@ -11,35 +11,52 @@ function scrapeProduct() {
     const host = window.location.hostname;
 
     // Helper to extract numbers from text
-    const extractPrice = (text) => {
-        if (!text) return 0;
-        // Clean text: enable regex to find all float-like patterns
+    const extractPrice = (element) => {
+        if (!element) return 0;
+
+        // 1. FILTER: Ignore strikethrough/discounted original prices
+        // Check class names for "line-through", "original", "deleted"
+        // check style text-decoration
+        const style = window.getComputedStyle(element);
+        if (style.textDecorationLine.includes('line-through') ||
+            element.className.includes('line-through') ||
+            element.className.includes('original-price')) {
+            return 0;
+        }
+
+        // Also check if any parent up to 3 levels is strikethrough
+        let parent = element.parentElement;
+        for (let i = 0; i < 3; i++) {
+            if (parent) {
+                const pStyle = window.getComputedStyle(parent);
+                if (pStyle.textDecorationLine.includes('line-through') ||
+                    parent.className.includes('line-through')) {
+                    return 0;
+                }
+                parent = parent.parentElement;
+            }
+        }
+
+        const text = element.innerText;
         const matches = text.match(/([0-9.,]+)/g);
         if (!matches) return 0;
 
-        // Convert to numbers, filtering out non-prices
         const prices = matches.map(m => parseFloat(m.replace(/,/g, ''))).filter(n => !isNaN(n));
-
         if (prices.length === 0) return 0;
 
-        // User wants "Smallest Quantity" price. 
-        // In a range "$5.00 - $10.00", the small quantity is $10.00.
-        // In tiers, usually the first price listed is the small quantity price.
         return Math.max(...prices);
     };
 
     // Helper to extract weight in grams
     const extractWeight = () => {
-        // Look for common content in specification tables
-        const keywords = ['weight', 'poids', 'single gross weight', 'package weight'];
+        const keywords = ['weight', 'poids', 'single gross weight', 'package weight', 'gross weight'];
         let foundText = '';
 
-        // Strategy 1: Look in DL/DT/DD or Table rows
+        // Strategy 1: Look in DL/DT/DD or Table rows (Standard Spec Table)
         const cells = document.querySelectorAll('td, dt, th, span.attr-name');
         for (let cell of cells) {
             const text = cell.innerText.toLowerCase();
             if (keywords.some(k => text.includes(k))) {
-                // Try to find the value in the next sibling or separate element
                 if (cell.tagName === 'DT') {
                     const dd = cell.nextElementSibling;
                     if (dd && dd.tagName === 'DD') foundText = dd.innerText;
@@ -50,8 +67,46 @@ function scrapeProduct() {
                     const val = cell.nextElementSibling || cell.parentElement.querySelector('.attr-value');
                     if (val) foundText = val.innerText;
                 }
-
                 if (foundText) break;
+            }
+        }
+
+        // Strategy 2: Text Content Search (for div-based layouts like Tailwind)
+        // Find ALL elements communicating a label
+        if (!foundText) {
+            const allElements = document.querySelectorAll('div, span, p, label');
+            for (let el of allElements) {
+                // Optimization: Skip elements with too much text (likely container)
+                if (el.innerText.length > 50) continue;
+
+                const text = el.innerText.toLowerCase();
+                // If specific keyword found exactly or closely
+                if (keywords.some(k => text === k || text === k + ':')) {
+                    // Look at Next Sibling
+                    const next = el.nextElementSibling;
+                    if (next) {
+                        foundText = next.innerText;
+                        break;
+                    }
+                    // Look at Parent's text content (if structure is <div>Label: Value</div>)
+                    if (el.parentElement) {
+                        foundText = el.parentElement.innerText;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Strategy 3: Heavy Scan for "0.000 kg" pattern in specific content areas
+        if (!foundText) {
+            const specAreas = document.querySelectorAll('.do-entry-list, .attributes-list, .product-info, #specs-list');
+            for (let area of specAreas) {
+                const text = area.innerText;
+                const match = text.match(/(\d+(\.\d+)?)\s*(kg|g|lb)\b/i);
+                if (match) {
+                    foundText = match[0];
+                    break;
+                }
             }
         }
 
@@ -72,7 +127,7 @@ function scrapeProduct() {
         // --- ALIBABA SCAPING ---
 
         // 1. Title
-        const titleEl = document.querySelector('h1');
+        const titleEl = document.querySelector('.product-title h1') || document.querySelector('h1');
         if (titleEl) product.title = titleEl.innerText.trim();
 
         // 2. Image
@@ -82,26 +137,29 @@ function scrapeProduct() {
         if (imgEl) {
             product.image = imgEl.src || imgEl.content;
             if (product.image && product.image.includes('_50x50')) {
-                product.image = product.image.split('_')[0].replace('.jpg_', '.jpg'); // clean Alibaba thumbnails
+                product.image = product.image.split('_')[0].replace('.jpg_', '.jpg');
             }
         }
 
-        // 3. Price
-        // Attempt to find the specific price blocks first (Ladder pricing)
-        let rawPriceText = "";
-        const priceElements = document.querySelectorAll('.price-item .price, .ma-ref-price span, .product-price .price');
+        // 3. Price (Robust)
+        // Collect all potential price containers
+        const priceCandidates = document.querySelectorAll(
+            '.price-item .price, .ma-ref-price span, .product-price .price, .id-text-highlight-dark, .price-text'
+        );
 
-        if (priceElements.length > 0) {
-            // Usually the first one corresponds to the smallest MOQ (highest price)
-            rawPriceText = priceElements[0].innerText;
+        // Extract logical max from VALID elements
+        let maxPrice = 0;
+        priceCandidates.forEach(el => {
+            const p = extractPrice(el);
+            if (p > maxPrice) maxPrice = p;
+        });
+
+        if (maxPrice > 0) {
+            product.price = maxPrice;
         } else {
-            // Fallback to meta string
+            // Fallback to meta
             const metaPrice = document.querySelector('meta[property="og:price:amount"]');
-            if (metaPrice) rawPriceText = metaPrice.content;
-        }
-
-        if (rawPriceText) {
-            product.price = extractPrice(rawPriceText);
+            if (metaPrice) product.price = parseFloat(metaPrice.content);
         }
 
         // 4. Weight
@@ -116,8 +174,9 @@ function scrapeProduct() {
         const imgEl = document.querySelector('.magnifier-image') || document.querySelector('meta[property="og:image"]');
         if (imgEl) product.image = imgEl.src || imgEl.content;
 
+        // Price
         const priceEl = document.querySelector('.product-price-current') || document.querySelector('.price-current');
-        if (priceEl) product.price = extractPrice(priceEl.innerText);
+        if (priceEl) product.price = extractPrice(priceEl);
 
         product.weight = extractWeight();
     }
