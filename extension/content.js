@@ -192,10 +192,54 @@ function scrapeProduct() {
     return product;
 }
 
+// Aggressive fallback search (scans ALL elements)
+function aggressiveScrape() {
+    let result = { title: '', price: '', weight: '' };
+
+    // Title
+    result.title = document.querySelector('.product-title')?.innerText?.trim() ||
+        document.querySelector('h1')?.innerText?.trim() || '';
+
+    // Price - find any element with US$ pattern
+    const allElements = [...document.querySelectorAll('*')];
+    const priceEl = allElements.find(el => /US\s*\$\s*\d/.test(el.innerText) && el.innerText.length < 50);
+    if (priceEl) {
+        const match = priceEl.innerText.match(/US\s*\$\s*([\d.,]+)/);
+        if (match) result.price = parseFloat(match[1].replace(',', ''));
+    }
+
+    // Weight - find any element with kg
+    const weightEl = allElements.find(el => /\d+[.,]?\d*\s*kg/i.test(el.innerText) && el.innerText.length < 100);
+    if (weightEl) {
+        const match = weightEl.innerText.match(/([\d.,]+)\s*kg/i);
+        if (match) result.weight = parseFloat(match[1].replace(',', '.')) * 1000;
+    }
+
+    return result;
+}
+
 // Listener for messages from popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "scrape") {
-        const data = scrapeProduct();
-        sendResponse(data);
+        // Scroll to trigger lazy-load
+        window.scrollTo(0, 300);
+
+        // Wait a bit for content to load, then scrape
+        setTimeout(() => {
+            let data = scrapeProduct();
+
+            // If main scraper didn't find price or weight, try aggressive fallback
+            if (!data.price || !data.weight) {
+                const fallback = aggressiveScrape();
+                if (!data.price && fallback.price) data.price = fallback.price;
+                if (!data.weight && fallback.weight) data.weight = fallback.weight;
+                if (!data.title && fallback.title) data.title = fallback.title;
+            }
+
+            console.log('[Alibaba Scraped]', data);
+            sendResponse(data);
+        }, 500);
+
+        return true; // Keep message channel open for async response
     }
 });
