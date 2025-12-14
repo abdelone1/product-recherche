@@ -2046,54 +2046,7 @@ body {
     background: var(--text-muted);
 }
 
-/* Fixed Column Widths (Pixels) */
-#allProductsTable th:nth-child(1) {
-    width: 250px;
-}
-
-/* Product Name (Wide) */
-#allProductsTable th:nth-child(2) {
-    width: 100px;
-}
-
-/* Date */
-#allProductsTable th:nth-child(3) {
-    width: 220px;
-}
-
-/* Social (Very Wide) */
-#allProductsTable th:nth-child(4) {
-    width: 120px;
-}
-
-/* Buy Price */
-#allProductsTable th:nth-child(5) {
-    width: 80px;
-}
-
-/* Weight */
-#allProductsTable th:nth-child(6) {
-    width: 160px;
-}
-
-/* Sell Price */
-#allProductsTable th:nth-child(7) {
-    width: 160px;
-}
-
-/* Profit */
-#allProductsTable th:nth-child(8) {
-    width: 160px;
-}
-
-/* Actions */
-
-/* Prevent overflow in cells */
-#allProductsTable td {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+/* Column widths and cell styles now use default responsive behavior like validatedProductsTable */
 
 /* ============================================
    Sidebar Collapse (Auto-hide)
