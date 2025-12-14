@@ -1974,7 +1974,8 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
         const btnDecline = `<button class="action-btn decline" onclick="declineProduct('${product.id}')" title="Décliner" style="background: #e53e3e;">❌</button>`;
 
         // Request Info Button (New)
-        const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="Demander Info (Transfert vers À compléter)">💬</button>`;
+        const btnTitle = isCompleted ? 'Voir Info / Commentaire' : 'Demander Info (Transfert vers À compléter)';
+        const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="${btnTitle}">💬</button>`;
 
         if (isValidated) {
             // Validated List: RETURN + LINK + Common
@@ -1982,10 +1983,11 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
             actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
         } else if (isCompleted) {
-            // Completed List: RESOLVE + LINK + Common
+            // Completed List: VIEW INFO + RESOLVE + LINK + Common
             const btnResolve = `<button class="action-btn resolve" onclick="resolveInfo('${product.id}')" title="Marquer comme complété (Retour Mes Produits)" style="background: #48bb78;">✅</button>`;
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
-            actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnResolve} ${btnDecline}`;
+            // Re-use btnRequestInfo as "View Info" (it opens the same modal)
+            actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnLink} ${btnResolve} ${btnDecline}`;
         } else {
             // Main Active List: REQUEST INFO + VALIDATE + DECLINE
             const btnValidate = `<button class="action-btn validate" onclick="validateProduct('${product.id}')" title="Valider ce produit">✅</button>`;
@@ -1999,7 +2001,7 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
 
         let thirdColumnContent = formatSocialIcons(product.name); // Default
         if (isCompleted) {
-            thirdColumnContent = `<span style="color: #ecc94b; font-style: italic;">${escapeHtml(product.infoRequest || 'Info requise')}</span>`;
+            // Keep standard columns
         }
 
         return `
