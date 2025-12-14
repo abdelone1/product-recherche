@@ -1557,9 +1557,9 @@ function handleEditSubmit(e) {
 
     const updatedData = {
         name: document.getElementById('editProductName').value,
-        buyPrice: document.getElementById('editBuyPrice').value,
-        sellPrice: document.getElementById('editSellPrice').value,
-        weight: document.getElementById('editWeight').value,
+        buyPrice: parseFloat(document.getElementById('editBuyPrice').value) || 0,
+        sellPrice: parseFloat(document.getElementById('editSellPrice').value) || 0,
+        weight: parseFloat(document.getElementById('editWeight').value) || 0,
         link: document.getElementById('editProductLink').value,
         image: document.getElementById('editProductImage').value, // Save edited image
         countries: selectedCountries,
