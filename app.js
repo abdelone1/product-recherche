@@ -1090,6 +1090,16 @@ function setupEventListeners() {
     document.getElementById('productForm').addEventListener('submit', handleProductSubmit);
     document.getElementById('productForm').addEventListener('reset', resetScorePreview);
 
+    // Edit Form
+    const editForm = document.getElementById('editForm');
+    if (editForm) editForm.addEventListener('submit', handleEditSubmit);
+
+    // Edit Modal Close/Cancel
+    const closeModalBtn = document.getElementById('closeModal');
+    const cancelEditBtn = document.getElementById('cancelEdit');
+    if (closeModalBtn) closeModalBtn.addEventListener('click', closeEditModal);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
+
     // Real-time score calculation
     setupScoreCalculation();
 
