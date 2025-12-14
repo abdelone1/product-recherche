@@ -2000,9 +2000,14 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
         // Let's replace the 3rd column (Social Icons) or add it? The user asked for "Products to Complete" table.
         // In the HTML for completedProductsTable i added a specific header "Commentaire / Info manquante" at index 2 (3rd col).
 
-        let thirdColumnContent = formatSocialIcons(product.name); // Default
-        if (isCompleted) {
-            // Keep standard columns
+        let thirdColumnContent = formatSocialIcons(product.name); // Default for active products
+        if (isValidated) {
+            // Show notes/comment for validated products
+            thirdColumnContent = product.notes
+                ? `<span class="product-comment" title="${escapeHtml(product.notes)}">${escapeHtml(product.notes.substring(0, 50))}${product.notes.length > 50 ? '...' : ''}</span>`
+                : '<span style="color: var(--text-muted);">-</span>';
+        } else if (isCompleted) {
+            // Keep standard columns for completed
         }
 
         return `
