@@ -524,6 +524,37 @@ body {
     color: var(--text-muted);
 }
 
+/* Fixed column widths for consistent layout */
+.table th:nth-child(1),
+.table td:nth-child(1) { width: 70px; }  /* Image */
+
+.table th:nth-child(2),
+.table td:nth-child(2) { width: 250px; min-width: 200px; }  /* Produit - large column */
+
+.table th:nth-child(3),
+.table td:nth-child(3) { width: 90px; }  /* Date */
+
+.table th:nth-child(4),
+.table td:nth-child(4) { width: 120px; }  /* Réseaux */
+
+.table th:nth-child(5),
+.table td:nth-child(5) { width: 80px; }  /* Produit Choisi */
+
+.table th:nth-child(6),
+.table td:nth-child(6) { width: 80px; }  /* Prix Achat */
+
+.table th:nth-child(7),
+.table td:nth-child(7) { width: 60px; }  /* Poids */
+
+.table th:nth-child(8),
+.table td:nth-child(8) { width: 100px; }  /* Vente Min */
+
+.table th:nth-child(9),
+.table td:nth-child(9) { width: 100px; }  /* Profit Cible */
+
+.table th:nth-child(10),
+.table td:nth-child(10) { width: 120px; }  /* Actions */
+
 .table tr:hover {
     background: var(--bg-hover);
 }
