@@ -2005,7 +2005,7 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
                         style="width: 60px; text-align: center; border: none; background: transparent; font-weight: bold; font-size: 14px; color: inherit;">
                     <button class="profit-btn" onclick="adjustTargetProfit('${product.id}', 1)">+</button>
                 </div>
-                <small class="profit-label">Profit Cible</small>
+                <small class="profit-label">Profit Cible ($)</small>
             </td>
             <td>${actionButtons}</td>
         </tr>
