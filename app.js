@@ -2121,7 +2121,8 @@ function openInfoModal(productId) {
 
     currentInfoId = productId;
     document.getElementById('infoProductName').textContent = `Produit: "${product.name}"`;
-    document.getElementById('infoComment').value = product.infoRequest || '';
+    // Pre-fill with existing comment (snake_case from database)
+    document.getElementById('infoComment').value = product.info_request || '';
     document.getElementById('infoModal').classList.add('active');
 }
 
@@ -2141,11 +2142,13 @@ function confirmRequestInfo() {
     const product = products.find(p => p.id === currentInfoId);
     if (!product) return;
 
-    const productId = currentInfoId; // Copy to local variable like validateProduct
+    const productId = currentInfoId; // Copy to local variable
+    const comment = document.getElementById('infoComment').value.trim() || 'Info manquante';
 
-    // 1. Optimistic Update (Immediate Feedback) - EXACTLY like validateProduct
+    // 1. Optimistic Update (Immediate Feedback)
     product.needs_info = true;
-    renderProductsTable(); // Move instantly from Active to Completed list
+    product.info_request = comment; // Store comment locally
+    renderProductsTable();
     updateDashboard();
     showToast('⏳ Demande Info enregistrée !');
     logActivity('Demande Info', product.name);
@@ -2154,8 +2157,8 @@ function confirmRequestInfo() {
     document.querySelector('.nav-item[data-section="completed-products"]').click();
     closeInfoModal();
 
-    // 2. Send to Cloud (Background) - EXACTLY like validateProduct
-    supabase.from('products').update({ needs_info: true }).eq('id', productId)
+    // 2. Send to Cloud (Background)
+    supabase.from('products').update({ needs_info: true, info_request: comment }).eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error requesting info: ", error);
