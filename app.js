@@ -1091,11 +1091,12 @@ function setupEventListeners() {
     // Real-time score calculation
     setupScoreCalculation();
 
-    // Edit form
-    document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
-    document.getElementById('closeModal').addEventListener('click', closeEditModal);
-    document.getElementById('cancelEdit').addEventListener('click', closeEditModal);
-    document.querySelector('.modal-overlay').addEventListener('click', closeEditModal);
+    // Event Listeners for Simulator
+    document.getElementById('simBuyPrice')?.addEventListener('input', autoCalculate);
+    document.getElementById('simWeight')?.addEventListener('input', autoCalculate);
+    document.getElementById('simSellPrice')?.addEventListener('input', autoCalculate);
+    document.getElementById('simTargetProfit')?.addEventListener('input', autoCalculate);
+    document.getElementById('simQuantity')?.addEventListener('input', autoCalculate);
 
     // Export buttons
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
@@ -1373,7 +1374,12 @@ function getFormData() {
 // ============================================
 
 async function detectProductImage(url, previewId) {
-    if (!url || !url.startsWith('http')) return;
+    if (!url) return;
+
+    // Auto-fix URL if missing protocol
+    if (!url.startsWith('http')) {
+        url = 'https://' + url;
+    }
 
     const previewContainer = document.getElementById(previewId);
     const hiddenInput = previewId === 'imagePreview' ? document.getElementById('productImage') : document.getElementById('editProductImage');

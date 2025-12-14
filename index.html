@@ -233,11 +233,16 @@
                             </div>
                             <div class="form-group">
                                 <label for="productLink">Lien Produit (L'image sera détectée auto.)</label>
-                                <input type="url" id="productLink" placeholder="https://alibaba.com/..."
-                                    onchange="detectProductImage(this.value, 'imagePreview')">
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="url" id="productLink" placeholder="Collez le lien ici..."
+                                        onblur="detectProductImage(this.value, 'imagePreview')">
+                                    <button type="button" class="btn btn-secondary"
+                                        onclick="detectProductImage(document.getElementById('productLink').value, 'imagePreview')"
+                                        title="Chercher l'image">🔎</button>
+                                </div>
                                 <input type="hidden" id="productImage">
                                 <div class="image-preview-container" id="imagePreview">
-                                    <span class="image-preview-text">Collez le lien pour voir l'image ici</span>
+                                    <span class="image-preview-text">Collez le lien et cliquez sur 🔎</span>
                                 </div>
                             </div>
                         </div>
@@ -890,8 +895,13 @@
                     </div>
                     <div class="form-group">
                         <label for="editProductLink">Lien Produit</label>
-                        <input type="url" id="editProductLink"
-                            onchange="detectProductImage(this.value, 'editImagePreview')">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="url" id="editProductLink"
+                                onblur="detectProductImage(this.value, 'editImagePreview')">
+                            <button type="button" class="btn btn-secondary"
+                                onclick="detectProductImage(document.getElementById('editProductLink').value, 'editImagePreview')"
+                                title="Chercher l'image">🔎</button>
+                        </div>
                         <input type="hidden" id="editProductImage">
                         <div class="image-preview-container" id="editImagePreview">
                             <span class="image-preview-text">Image actuelle</span>

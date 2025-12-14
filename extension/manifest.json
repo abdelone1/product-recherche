@@ -1,0 +1,17 @@
+{
+    "manifest_version": 3,
+    "name": "Product Research Scraper",
+    "version": "1.0",
+    "description": "Scrape Alibaba/AliExpress products and add them to your Product Research Tool",
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "*://*.alibaba.com/*",
+        "*://*.aliexpress.com/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
