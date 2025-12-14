@@ -1032,6 +1032,29 @@
         </div>
     </div>
 
+    <!-- Comment Modal for Validated Products -->
+    <div class="modal" id="commentModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>💬 Commentaire Produit Validé</h2>
+                <button class="modal-close" id="closeCommentModal">×</button>
+            </div>
+            <div style="padding: 24px;">
+                <p id="commentProductName" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
+                <div class="form-group">
+                    <label for="productComment">Commentaire / Notes</label>
+                    <textarea id="productComment" class="form-control" rows="4"
+                        placeholder="Ex: Fournisseur confirmé, stock ok, prêt à lancer..."></textarea>
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" id="cancelComment">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="saveComment">💾 Sauvegarder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Decline Modal -->
     <div class="modal" id="declineModal">
         <div class="modal-overlay"></div>

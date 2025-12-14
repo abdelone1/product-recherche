@@ -1978,10 +1978,11 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
         const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="${btnTitle}">💬</button>`;
 
         if (isValidated) {
-            // Validated List: RETURN + LINK + Common
+            // Validated List: COMMENT + RETURN + LINK + Common
+            const btnComment = `<button class="action-btn comment" onclick="openCommentModal('${product.id}')" title="Ajouter/Voir commentaire">💬</button>`;
             const btnReturn = `<button class="action-btn return" onclick="unvalidateProduct('${product.id}')" title="Remettre en liste active">↩️</button>`;
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
-            actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
+            actionButtons = `${btnComment} ${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
         } else if (isCompleted) {
             // Completed List: VIEW INFO + RETURN (instead of link) + Common
             const btnReturn = `<button class="action-btn return" onclick="resolveInfo('${product.id}')" title="Retour vers Mes Produits">↩️</button>`;
@@ -2216,6 +2217,60 @@ function resolveInfo(productId) {
             }
         });
 }
+
+// ============================================
+// Comment Modal for Validated Products
+// ============================================
+
+let currentCommentId = null;
+
+function openCommentModal(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    currentCommentId = productId;
+    document.getElementById('commentProductName').textContent = `Produit: "${product.name}"`;
+    // Pre-fill with existing notes
+    document.getElementById('productComment').value = product.notes || '';
+    document.getElementById('commentModal').classList.add('active');
+}
+
+function closeCommentModal() {
+    document.getElementById('commentModal').classList.remove('active');
+    currentCommentId = null;
+}
+
+function saveComment() {
+    if (!currentCommentId) return;
+
+    const product = products.find(p => p.id === currentCommentId);
+    if (!product) return;
+
+    const productId = currentCommentId;
+    const comment = document.getElementById('productComment').value.trim();
+
+    // 1. Optimistic Update
+    product.notes = comment;
+    renderProductsTable();
+    showToast('💬 Commentaire sauvegardé !');
+    logActivity('Commentaire', product.name);
+    closeCommentModal();
+
+    // 2. Send to Cloud
+    supabase.from('products').update({ notes: comment }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) {
+                console.error("Error saving comment: ", error);
+                showToast('Erreur synchro cloud, refraîchissez');
+            }
+        });
+}
+
+// Event Listeners for Comment Modal
+document.getElementById('closeCommentModal')?.addEventListener('click', closeCommentModal);
+document.getElementById('cancelComment')?.addEventListener('click', closeCommentModal);
+document.getElementById('saveComment')?.addEventListener('click', saveComment);
+
 // Function to return a validated product to active list
 function unvalidateProduct(productId) {
     const product = products.find(p => p.id === productId);
