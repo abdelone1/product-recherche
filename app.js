@@ -1935,7 +1935,7 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
         const dateB = new Date(b.date || b.createdAt);
         if (dateB - dateA !== 0) return dateB - dateA;
         // Secondary sort by id for stable ordering
-        return String(a.id).localeCompare(String(b.id));
+        return String(b.id).localeCompare(String(a.id));
     });
 
     tbody.innerHTML = sortedProducts.map(product => {
