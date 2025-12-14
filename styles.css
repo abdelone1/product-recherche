@@ -2015,13 +2015,7 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-/* Fixed Table Layout with Scroll */
-#allProductsTable {
-    table-layout: fixed;
-    width: 100%;
-    min-width: 1300px;
-    /* Forces scroll if screen is smaller */
-}
+/* Table now uses default responsive layout like validatedProductsTable */
 
 /* Enable Horizontal Scroll on Container */
 .table-container {
