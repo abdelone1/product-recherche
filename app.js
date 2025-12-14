@@ -950,6 +950,8 @@ function handleLogin(e) {
         currentUser = username;
         sessionStorage.setItem('productResearchUser', username);
         checkAuth();
+        // Check for extension data after login
+        checkUrlParams();
         showToast(`Bienvenue, ${username} !`);
 
         // Log the connection
