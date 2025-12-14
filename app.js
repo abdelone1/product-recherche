@@ -1213,6 +1213,7 @@ function navigateToSection(sectionId) {
         'add-product': { title: 'Ajouter Produit', subtitle: 'Enregistrer un nouveau produit' },
         'products': { title: 'Mes Produits', subtitle: 'Gérer tous vos produits' },
         'validated-products': { title: 'Produits Validés', subtitle: 'Vos produits gagnants' },
+        'completed-products': { title: 'Produits à Compléter', subtitle: 'Produits en attente d\'information' },
         'declined-products': { title: 'Produits Déclinés', subtitle: 'Produits non retenus' },
         'facebook-ads': { title: 'Facebook Ads', subtitle: 'Rechercher des produits gagnants' },
         'settings': { title: 'Paramètres', subtitle: 'Configurer l\'application' },
@@ -1899,24 +1900,35 @@ function formatPrice(usdAmount, currency = currentCurrency) {
 function renderProductsTable(filteredProducts = null) {
     const allProducts = filteredProducts || products;
 
-    // Split products (exclude declined from active and validated)
-    const activeProducts = allProducts.filter(p => !p.validated && !p.declined);
+    // Split products
+    // Active: Not validated, Not declined, Not needsInfo
+    const activeProducts = allProducts.filter(p => !p.validated && !p.declined && !p.needsInfo);
+    // Validated: Validated, Not declined
     const validatedProducts = allProducts.filter(p => p.validated && !p.declined);
+    // Completed/Request Info: Needs Info, Not declined
+    const completedProducts = allProducts.filter(p => p.needsInfo && !p.declined);
 
-    // Render Active Products (Main List)
+    // Render Active Products
     renderSpecificTable('allProductsBody', 'emptyProducts', 'allProductsTable', activeProducts, false);
 
-    // Render Validated Products (New List)
+    // Render Validated Products
     renderSpecificTable('validatedProductsBody', 'emptyValidatedProducts', 'validatedProductsTable', validatedProducts, true);
 
-    // Update count badge for validated
+    // Render Completed Products (New)
+    renderSpecificTable('completedProductsBody', 'emptyCompletedProducts', 'completedProductsTable', completedProducts, false, true);
+
+    // Update count badges
     const validatedCountEl = document.getElementById('validatedCount');
     if (validatedCountEl) validatedCountEl.textContent = `${validatedProducts.length} produits`;
+
+    const completedCountEl = document.getElementById('completedCount');
+    if (completedCountEl) completedCountEl.textContent = `${completedProducts.length} produits`;
 
     // Update active product count display
     const activeCountEl = document.getElementById('activeProductCount');
     if (activeCountEl) {
-        const totalActive = products.filter(p => !p.validated).length;
+        // Total active excluding others
+        const totalActive = products.filter(p => !p.validated && !p.declined && !p.needsInfo).length;
         if (filteredProducts) {
             activeCountEl.textContent = `${activeProducts.length} produits affichés sur ${totalActive} total`;
         } else {
@@ -1926,7 +1938,7 @@ function renderProductsTable(filteredProducts = null) {
 }
 
 // Helper to render a specific product table
-function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated) {
+function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated, isCompleted = false) {
     const tbody = document.getElementById(bodyId);
     const emptyState = document.getElementById(emptyId);
     const table = document.getElementById(tableId);
@@ -1947,7 +1959,6 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
         const dateA = new Date(a.date || a.createdAt);
         const dateB = new Date(b.date || b.createdAt);
         if (dateB - dateA !== 0) return dateB - dateA;
-        // Secondary sort by id for stable ordering
         return String(b.id).localeCompare(String(a.id));
     });
 
@@ -1955,25 +1966,40 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
         const buyPrice = parseFloat(product.buyPrice) || 0;
         const dynamicData = calculateDynamicPrice(product);
         const minSellPrice = dynamicData.minSellPriceUSD;
-        const profitClass = 'positive';
-
         // ACTIONS Logic
         let actionButtons = '';
-
         // Common Buttons
         const btnSimulator = `<button class="action-btn simulator" onclick="openSimulatorForProduct('${product.id}')" title="Simulateur COD">🧮</button>`;
         const btnEdit = `<button class="action-btn edit" onclick="openEditModal('${product.id}')" title="Modifier">✏️</button>`;
         const btnDecline = `<button class="action-btn decline" onclick="declineProduct('${product.id}')" title="Décliner" style="background: #e53e3e;">❌</button>`;
 
+        // Request Info Button (New)
+        const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="Demander Info (Transfert vers À compléter)">💬</button>`;
+
         if (isValidated) {
-            // Validated List: Show RETURN + LINK + Common
+            // Validated List: RETURN + LINK + Common
             const btnReturn = `<button class="action-btn return" onclick="unvalidateProduct('${product.id}')" title="Remettre en liste active">↩️</button>`;
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
             actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
+        } else if (isCompleted) {
+            // Completed List: RESOLVE + LINK + Common
+            const btnResolve = `<button class="action-btn resolve" onclick="resolveInfo('${product.id}')" title="Marquer comme complété (Retour Mes Produits)" style="background: #48bb78;">✅</button>`;
+            const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
+            actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnResolve} ${btnDecline}`;
         } else {
-            // Main List: Show VALIDATE + DECLINE + Common
+            // Main Active List: REQUEST INFO + VALIDATE + DECLINE
             const btnValidate = `<button class="action-btn validate" onclick="validateProduct('${product.id}')" title="Valider ce produit">✅</button>`;
-            actionButtons = `${btnSimulator} ${btnEdit} ${btnValidate} ${btnDecline}`;
+            actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnValidate} ${btnDecline}`;
+        }
+
+        // Special column for Completed List (Comment instead of Networks/Reseaux if desired, or just show everything)
+        // For now user requested table consistency, but we need to show the comment.
+        // Let's replace the 3rd column (Social Icons) or add it? The user asked for "Products to Complete" table.
+        // In the HTML for completedProductsTable i added a specific header "Commentaire / Info manquante" at index 2 (3rd col).
+
+        let thirdColumnContent = formatSocialIcons(product.name); // Default
+        if (isCompleted) {
+            thirdColumnContent = `<span style="color: #ecc94b; font-style: italic;">${escapeHtml(product.infoRequest || 'Info requise')}</span>`;
         }
 
         return `
@@ -1985,20 +2011,14 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
             }
             </td>
             <td><strong>${escapeHtml(product.name)}</strong></td>
+            <td>${thirdColumnContent}</td> 
             <td>${product.date}</td>
-            <td>${formatSocialIcons(product.name)}</td>
             <td>${product.link ? `<a href="${product.link}" target="_blank" class="chosen-product-link" title="${product.link}">🔗 Voir</a>` : '<span style="color: var(--text-muted);">-</span>'}</td>
             <td>${formatPrice(buyPrice)}</td>
-            <td>${product.weight ? product.weight + 'g' : '-'}</td>
-            
-            <td class="dynamic-price-cell">
-                <span class="price-value">${formatPrice(minSellPrice)}</span>
-                <small class="price-label">Prix Min. Recommandé</small>
-            </td>
             
             <td class="profit-control-cell">
-                <div class="profit-control-wrapper ${profitClass}">
-                    <button class="profit-btn" onclick="adjustTargetProfit('${product.id}', -1)">-</button>
+                <div class="profit-control-wrapper normal">
+                     <button class="profit-btn" onclick="adjustTargetProfit('${product.id}', -1)">-</button>
                     <input type="number" class="profit-input" value="${dynamicData.targetProfitUSD}" 
                         min="0" step="1" 
                         onchange="setTargetProfit('${product.id}', this.value)"
@@ -2081,11 +2101,102 @@ function confirmDeclineProduct() {
     }).eq('id', currentDeclineId)
         .then(({ error }) => {
             if (error) console.error('Decline error:', error);
+            closeDeclineModal();
         });
-
-    closeDeclineModal();
 }
 
+// ============================================
+// Request Info / Completed Products Workflow
+// ============================================
+
+let currentInfoId = null;
+
+function openInfoModal(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    currentInfoId = productId;
+    document.getElementById('infoProductName').textContent = `Produit: "${product.name}"`;
+    document.getElementById('infoComment').value = product.infoRequest || '';
+    document.getElementById('infoModal').classList.add('active');
+}
+
+function closeInfoModal() {
+    document.getElementById('infoModal').classList.remove('active');
+    currentInfoId = null;
+}
+
+// Event Listeners for Info Modal
+document.getElementById('closeInfoModal')?.addEventListener('click', closeInfoModal);
+document.getElementById('cancelInfo')?.addEventListener('click', closeInfoModal);
+document.getElementById('confirmRequestInfo')?.addEventListener('click', confirmRequestInfo);
+
+function confirmRequestInfo() {
+    if (!currentInfoId) return;
+
+    const product = products.find(p => p.id === currentInfoId);
+    if (!product) return;
+
+    const comment = document.getElementById('infoComment').value.trim() || 'Info manquante';
+
+    // 1. Optimistic Update
+    product.needsInfo = true;
+    product.infoRequest = comment;
+    product.infoRequestedAt = new Date().toISOString();
+
+    renderProductsTable();
+    updateDashboard();
+
+    // Switch to Completed Tab to show where it went
+    document.querySelector('.nav-item[data-section="completed-products"]').click();
+
+    showToast('⏳ Demande d\'info enregistrée');
+    logActivity('Demande Info', product.name);
+    closeInfoModal();
+
+    // 2. Send to Cloud
+    supabase.from('products').update({
+        needsInfo: true,
+        infoRequest: comment,
+        infoRequestedAt: new Date().toISOString()
+    }).eq('id', currentInfoId)
+        .then(({ error }) => {
+            if (error) {
+                console.error('Request Info error:', error);
+                showToast('Erreur synchro cloud');
+            }
+        });
+}
+
+function resolveInfo(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    if (!confirm('Avez-vous complété les informations pour ce produit ? Il retournera dans "Mes Produits".')) return;
+
+    // 1. Optimistic Update
+    product.needsInfo = false;
+    // Keep the comment as history or clear it? Clearing for now to reset state.
+    // product.infoRequest = null;
+
+    renderProductsTable();
+    updateDashboard();
+
+    // Switch back to Mes Produits
+    document.querySelector('.nav-item[data-section="products"]').click();
+
+    showToast('✅ Info complétée !');
+    logActivity('Info Complétée', product.name);
+
+    // 2. Send to Cloud
+    supabase.from('products').update({
+        needsInfo: false,
+        // infoRequest: null // Optional: clear or keep history
+    }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) console.error('Resolve Info error:', error);
+        });
+}
 // Function to return a validated product to active list
 function unvalidateProduct(productId) {
     const product = products.find(p => p.id === productId);

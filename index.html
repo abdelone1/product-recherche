@@ -69,6 +69,10 @@
                 <span class="nav-icon">✅</span>
                 <span class="nav-text">Produits Validés</span>
             </a>
+            <a href="#completed-products" class="nav-item" data-section="completed-products">
+                <span class="nav-icon">⏳</span>
+                <span class="nav-text">Produits à compléter</span>
+            </a>
             <a href="#declined-products" class="nav-item" data-section="declined-products">
                 <span class="nav-icon">❌</span>
                 <span class="nav-text">Produits Déclinés</span>
@@ -444,23 +448,55 @@
                     <table class="table" id="declinedProductsTable">
                         <thead>
                             <tr>
+                                <th>Image</th>
                                 <th>Produit</th>
-                                <th>Date</th>
-                                <th>Réseaux</th>
-                                <th>Prix Achat</th>
-                                <th>Poids</th>
-                                <th>Raison Déclin</th>
+                                <th>Motif du Refus</th>
+                                <th>Date du Refus</th>
+                                <th>Dernier Prix</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="declinedProductsBody">
-                            <!-- Declined products will be inserted here -->
+                            <!-- Products will be inserted here -->
                         </tbody>
                     </table>
                     <div class="empty-state" id="emptyDeclinedProducts">
                         <span class="empty-icon">🗑️</span>
                         <p>Aucun produit décliné</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Completed Products Section (New) -->
+        <section class="section" id="completed-products-section" style="display: none;">
+            <div class="section-header">
+                <h2>⏳ Produits à compléter</h2>
+                <div class="header-actions">
+                    <span class="badge badge-warning" id="completedCount">0 produits</span>
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table" id="completedProductsTable">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Produit</th>
+                            <th>Commentaire / Info manquante</th>
+                            <th>Date</th>
+                            <th>Réseaux</th>
+                            <th>Prix Achat</th>
+                            <th>Profit Cible ($)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="completedProductsBody">
+                        <!-- Products will be inserted here -->
+                    </tbody>
+                </table>
+                <div class="empty-state" id="emptyCompletedProducts">
+                    <span class="empty-icon">📝</span>
+                    <p>Aucun produit en attente d'information</p>
                 </div>
             </div>
         </section>
@@ -968,6 +1004,29 @@
                     <button type="submit" class="btn btn-primary">💾 Sauvegarder</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Request Info Modal (New) -->
+    <div class="modal" id="infoModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>📝 Demande d'information</h2>
+                <button class="modal-close" id="closeInfoModal">×</button>
+            </div>
+            <div style="padding: 24px;">
+                <p id="infoProductName" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
+                <div class="form-group">
+                    <label for="infoComment">Commentaire / Info manquante</label>
+                    <textarea id="infoComment" class="form-control" rows="3"
+                        placeholder="Ex: Il manque l'image, prix à vérifier..."></textarea>
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" id="cancelInfo">Annuler</button>
+                    <button type="button" class="btn btn-warning" id="confirmRequestInfo">Valider la demande</button>
+                </div>
+            </div>
         </div>
     </div>
 
