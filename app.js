@@ -1988,9 +1988,10 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
             // Re-use btnRequestInfo as "View Info" (it opens the same modal)
             actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnReturn} ${btnDecline}`;
         } else {
-            // Main Active List: REQUEST INFO + VALIDATE + DECLINE
+            // Main Active List: REQUEST INFO + VALIDATE + DELETE + DECLINE
             const btnValidate = `<button class="action-btn validate" onclick="validateProduct('${product.id}')" title="Valider ce produit">✅</button>`;
-            actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnValidate} ${btnDecline}`;
+            const btnDelete = `<button class="action-btn delete" onclick="deleteProduct('${product.id}')" title="Supprimer définitivement" style="background: #e53e3e;">🗑️</button>`;
+            actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnValidate} ${btnDelete} ${btnDecline}`;
         }
 
         // Special column for Completed List (Comment instead of Networks/Reseaux if desired, or just show everything)
@@ -2056,6 +2057,30 @@ function validateProduct(productId) {
                 console.error("Error validating product: ", error);
                 showToast('Erreur synchro cloud, refraîchissez');
                 // Revert if needed, but for validation simple toast is usually enough
+            }
+        });
+}
+
+// Function to permanently delete a product
+function deleteProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    if (!confirm(`⚠️ Supprimer définitivement "${product.name}" ?\n\nCette action est irréversible.`)) return;
+
+    // 1. Optimistic Update (Immediate Feedback)
+    products = products.filter(p => p.id !== productId);
+    renderProductsTable();
+    updateDashboard();
+    showToast('🗑️ Produit supprimé !');
+    logActivity('Suppression', product.name);
+
+    // 2. Send to Cloud (Background)
+    supabase.from('products').delete().eq('id', productId)
+        .then(({ error }) => {
+            if (error) {
+                console.error("Error deleting product: ", error);
+                showToast('Erreur synchro cloud, refraîchissez');
             }
         });
 }
