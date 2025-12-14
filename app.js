@@ -2141,38 +2141,25 @@ function confirmRequestInfo() {
     const product = products.find(p => p.id === currentInfoId);
     if (!product) return;
 
-    const comment = document.getElementById('infoComment').value.trim() || 'Info manquante';
+    const productId = currentInfoId; // Copy to local variable like validateProduct
 
-    // 1. Optimistic Update
+    // 1. Optimistic Update (Immediate Feedback) - EXACTLY like validateProduct
     product.needs_info = true;
-    product.info_request = comment;
-    product.info_requested_at = new Date().toISOString();
-
-    renderProductsTable();
+    renderProductsTable(); // Move instantly from Active to Completed list
     updateDashboard();
+    showToast('⏳ Demande Info enregistrée !');
+    logActivity('Demande Info', product.name);
 
     // Switch to Completed Tab to show where it went
     document.querySelector('.nav-item[data-section="completed-products"]').click();
-
-    showToast('⏳ Demande enregistrée (v2)');
-    logActivity('Demande Info', product.name);
     closeInfoModal();
 
-    // 2. Send to Cloud
-    supabase.from('products').update({
-        needs_info: true,
-        info_request: comment,
-        info_requested_at: new Date().toISOString()
-    }).eq('id', currentInfoId).select()
-        .then(({ data, error }) => {
+    // 2. Send to Cloud (Background) - EXACTLY like validateProduct
+    supabase.from('products').update({ needs_info: true }).eq('id', productId)
+        .then(({ error }) => {
             if (error) {
-                console.error('Request Info error:', error);
-                showToast('❌ Erreur Cloud: ' + error.message);
-            } else {
-                console.log('Update success:', data);
-                if (!data || data.length === 0) {
-                    console.warn('No rows updated');
-                }
+                console.error("Error requesting info: ", error);
+                showToast('Erreur synchro cloud, refraîchissez');
             }
         });
 }
@@ -2183,27 +2170,23 @@ function resolveInfo(productId) {
 
     if (!confirm('Avez-vous complété les informations pour ce produit ? Il retournera dans "Mes Produits".')) return;
 
-    // 1. Optimistic Update
+    // 1. Optimistic Update (Immediate Feedback) - EXACTLY like validateProduct
     product.needs_info = false;
-    // Keep the comment as history or clear it? Clearing for now to reset state.
-    // product.info_request = null;
-
-    renderProductsTable();
+    renderProductsTable(); // Move instantly from Completed to Active list
     updateDashboard();
+    showToast('✅ Info complétée !');
+    logActivity('Info Complétée', product.name);
 
     // Switch back to Mes Produits
     document.querySelector('.nav-item[data-section="products"]').click();
 
-    showToast('✅ Info complétée !');
-    logActivity('Info Complétée', product.name);
-
-    // 2. Send to Cloud
-    supabase.from('products').update({
-        needs_info: false,
-        // info_request: null // Optional: clear or keep history
-    }).eq('id', productId)
+    // 2. Send to Cloud (Background) - EXACTLY like validateProduct
+    supabase.from('products').update({ needs_info: false }).eq('id', productId)
         .then(({ error }) => {
-            if (error) console.error('Resolve Info error:', error);
+            if (error) {
+                console.error("Error resolving info: ", error);
+                showToast('Erreur synchro cloud, refraîchissez');
+            }
         });
 }
 // Function to return a validated product to active list
