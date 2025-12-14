@@ -2007,7 +2007,11 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
                 ? `<span class="product-comment" title="${escapeHtml(product.notes)}">${escapeHtml(product.notes.substring(0, 50))}${product.notes.length > 50 ? '...' : ''}</span>`
                 : '<span style="color: var(--text-muted);">-</span>';
         } else if (isCompleted) {
-            // Keep standard columns for completed
+            // Show info_request/comment for completed products
+            const comment = product.info_request || product.notes;
+            thirdColumnContent = comment
+                ? `<span class="product-comment" title="${escapeHtml(comment)}">${escapeHtml(comment.substring(0, 50))}${comment.length > 50 ? '...' : ''}</span>`
+                : '<span style="color: var(--text-muted);">-</span>';
         }
 
         return `
