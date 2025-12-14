@@ -1483,7 +1483,7 @@ function handleProductSubmit(e) {
             if (error) throw error;
             showToast('Produit ajouté (Cloud) !');
             logActivity('Ajout', formData.name);
-            e.target.reset();
+            document.getElementById('productForm').reset();
             resetScorePreview();
             navigateToSection('products');
         })
