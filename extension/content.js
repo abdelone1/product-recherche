@@ -1,4 +1,80 @@
 // This script runs ON the Alibaba/AliExpress page
+
+// === Extract highest price by scanning all visible elements ===
+function extractHighestPrice() {
+    // 1. Find all price blocks containing "US$" and numbers
+    const priceBlocks = [...document.querySelectorAll('*')]
+        .filter(el => {
+            const text = el.innerText || '';
+            return /US\s*\$\s*\d/.test(text) && text.length < 100;
+        })
+        .map(el => el.innerText.trim());
+
+    // 2. Remove duplicates
+    const uniquePrices = [...new Set(priceBlocks)];
+
+    // 3. Extract all prices and return the highest
+    let allPrices = [];
+    for (const text of uniquePrices) {
+        const matches = text.match(/US\s*\$\s*([\d,]+\.?\d*)/gi);
+        if (matches) {
+            for (const m of matches) {
+                const numMatch = m.match(/([\d,]+\.?\d*)/);
+                if (numMatch) {
+                    const price = parseFloat(numMatch[1].replace(/,/g, ''));
+                    if (!isNaN(price) && price > 0 && price < 100000) {
+                        allPrices.push(price);
+                    }
+                }
+            }
+        }
+    }
+
+    // Return highest price (small quantity price)
+    return allPrices.length > 0 ? Math.max(...allPrices) : null;
+}
+
+// === Extract weight from page ===
+function extractWeight() {
+    // Strategy 1: Look in spec rows
+    const specRowSelectors = ['.spec-row', '.do-entry-item', '.attribute-item', '.product-prop-item'];
+    for (const sel of specRowSelectors) {
+        const rows = document.querySelectorAll(sel);
+        for (const row of rows) {
+            const label = (row.querySelector('.name, .do-entry-title, .attr-name')?.innerText || '').toLowerCase();
+            if (label.includes('weight') || label.includes('poids') || label.includes('package')) {
+                const valEl = row.querySelector('.value, .do-entry-value, .attr-value');
+                if (valEl) {
+                    const match = valEl.innerText.match(/([\d.,]+)\s*(kg|g|lb)/i);
+                    if (match) {
+                        const num = parseFloat(match[1].replace(',', '.'));
+                        const unit = match[2].toLowerCase();
+                        if (unit === 'kg') return num * 1000;
+                        if (unit === 'g') return num;
+                        if (unit === 'lb') return num * 453.592;
+                    }
+                }
+            }
+        }
+    }
+
+    // Strategy 2: Regex on body text
+    const bodyText = document.body.innerText;
+    const weightMatch = bodyText.match(/(?:weight|poids)[:\s]+([\d.,]+)\s*(kg|g|lb)/i) ||
+        bodyText.match(/([\d]+[.,]\d{2,3})\s*kg/i) ||
+        bodyText.match(/(\d+(?:\.\d+)?)\s*kg/i);
+    if (weightMatch) {
+        const num = parseFloat(weightMatch[1].replace(',', '.'));
+        const unit = (weightMatch[2] || 'kg').toLowerCase();
+        if (unit === 'kg') return num * 1000;
+        if (unit === 'g') return num;
+        if (unit === 'lb') return num * 453.592;
+    }
+
+    return null;
+}
+
+// === Main scrape function ===
 function scrapeProduct() {
     let product = {
         title: "",
@@ -10,64 +86,23 @@ function scrapeProduct() {
 
     const host = window.location.hostname;
 
-    // === HELPER: Parse price value (handles EU/US formats) ===
-    const parsePrice = (text) => {
-        if (!text) return 0;
-        // Match price patterns
-        const matches = text.match(/[\d]+[.,]?\d*/g);
-        if (!matches) return 0;
-
-        const prices = matches.map(m => {
-            let cleaned = m;
-            if (m.includes('.') && m.includes(',')) {
-                if (m.lastIndexOf(',') > m.lastIndexOf('.')) {
-                    cleaned = m.replace(/\./g, '').replace(',', '.');
-                } else {
-                    cleaned = m.replace(/,/g, '');
-                }
-            } else if (m.includes(',')) {
-                if (/,\d{2}$/.test(m)) {
-                    cleaned = m.replace(',', '.');
-                } else {
-                    cleaned = m.replace(/,/g, '');
-                }
-            }
-            return parseFloat(cleaned);
-        }).filter(n => !isNaN(n) && n > 0 && n < 100000);
-
-        if (prices.length === 0) return 0;
-        return Math.max(...prices);
-    };
-
-    // === ALIBABA ===
     if (host.includes('alibaba.com')) {
-
-        // 1. TITLE
-        const titleSelectors = [
-            '.product-title',
-            '.product-title h1',
-            'h1[data-product-title]',
-            'h1'
-        ];
-        for (const sel of titleSelectors) {
-            const el = document.querySelector(sel);
-            if (el && el.innerText.trim()) {
-                product.title = el.innerText.trim();
-                break;
-            }
+        // Check if we're on a product detail page
+        if (!window.location.href.includes('/product-detail/') &&
+            !window.location.href.includes('/product/')) {
+            console.log('[Scraper] Not a product page');
         }
 
+        // 1. TITLE
+        product.title = document.querySelector('.product-title')?.innerText?.trim() ||
+            document.querySelector('h1')?.innerText?.trim() || '';
+
         // 2. IMAGE
-        const imgSelectors = [
-            '.main-image img',
-            '.detail-image img',
-            '.gallery-image img',
-            'meta[property="og:image"]'
-        ];
+        const imgSelectors = ['.main-image img', '.detail-image img', '.gallery-image img', 'meta[property="og:image"]'];
         for (const sel of imgSelectors) {
             const el = document.querySelector(sel);
             if (el) {
-                product.image = el.src || el.content;
+                product.image = el.src || el.content || '';
                 if (product.image && product.image.includes('_50x50')) {
                     product.image = product.image.split('_')[0].replace('.jpg_', '.jpg');
                 }
@@ -75,167 +110,34 @@ function scrapeProduct() {
             }
         }
 
-        // 3. PRICE (multiple strategies)
-        const priceSelectors = [
-            '.price',
-            '.ma-b-price',
-            '.uniform-banner-module_price',
-            '.product-price-value',
-            '.price-current',
-            '.pre-inquiry-price',
-            '.price-item .price',
-            '.ma-ref-price span',
-            '.product-price .price',
-            '.id-text-highlight-dark',
-            '.price-text',
-            '[data-spm="price"]'
-        ];
-
-        for (const sel of priceSelectors) {
-            const el = document.querySelector(sel);
-            if (el && el.innerText.trim()) {
-                // Skip strikethrough prices
-                const style = window.getComputedStyle(el);
-                if (style.textDecorationLine.includes('line-through')) continue;
-                if (el.className.includes('line-through') || el.className.includes('original')) continue;
-
-                const p = parsePrice(el.innerText);
-                if (p > 0) {
-                    product.price = p;
-                    break;
-                }
-            }
-        }
-
-        // Fallback: Regex on page text
-        if (!product.price) {
-            const text = document.body.innerText;
-            const priceMatch = text.match(/US\s*\$\s*([\d,]+\.?\d*)/i);
-            if (priceMatch) {
-                product.price = parsePrice(priceMatch[1]);
-            }
-        }
-
-        // Fallback: Meta tag
-        if (!product.price) {
-            const metaPrice = document.querySelector('meta[property="og:price:amount"]');
-            if (metaPrice) product.price = parseFloat(metaPrice.content);
-        }
+        // 3. PRICE - Use robust extraction
+        product.price = extractHighestPrice() || '';
 
         // 4. WEIGHT
-        // Strategy A: Spec rows
-        const specRowSelectors = [
-            '.spec-row',
-            '.do-entry-item',
-            '.attribute-item',
-            '.product-prop-item'
-        ];
-        for (const sel of specRowSelectors) {
-            const rows = document.querySelectorAll(sel);
-            for (const row of rows) {
-                const label = (row.querySelector('.name, .do-entry-title, .attr-name')?.innerText || '').toLowerCase();
-                if (label.includes('weight') || label.includes('poids') || label.includes('package')) {
-                    const valEl = row.querySelector('.value, .do-entry-value, .attr-value');
-                    if (valEl) {
-                        const valText = valEl.innerText.toLowerCase();
-                        const match = valText.match(/([\d.,]+)\s*(kg|g|lb)/i);
-                        if (match) {
-                            const num = parseFloat(match[1].replace(',', '.'));
-                            if (match[2].toLowerCase() === 'kg') product.weight = num * 1000;
-                            else if (match[2].toLowerCase() === 'g') product.weight = num;
-                            else if (match[2].toLowerCase() === 'lb') product.weight = num * 453.592;
-                            break;
-                        }
-                    }
-                }
-            }
-            if (product.weight) break;
-        }
+        product.weight = extractWeight() || '';
 
-        // Strategy B: Regex on body text
-        if (!product.weight) {
-            const bodyText = document.body.innerText;
-            const weightMatch = bodyText.match(/(?:weight|poids)[:\s]+([\d.,]+)\s*(kg|g|lb)/i) ||
-                bodyText.match(/([\d]+[.,]\d{2,3})\s*kg/i);
-            if (weightMatch) {
-                const num = parseFloat(weightMatch[1].replace(',', '.'));
-                const unit = (weightMatch[2] || 'kg').toLowerCase();
-                if (unit === 'kg') product.weight = num * 1000;
-                else if (unit === 'g') product.weight = num;
-                else if (unit === 'lb') product.weight = num * 453.592;
-            }
-        }
-
-        // === ALIEXPRESS ===
     } else if (host.includes('aliexpress.com')) {
-        const titleEl = document.querySelector('h1');
-        if (titleEl) product.title = titleEl.innerText.trim();
+        product.title = document.querySelector('h1')?.innerText?.trim() || '';
 
         const imgEl = document.querySelector('.magnifier-image') || document.querySelector('meta[property="og:image"]');
-        if (imgEl) product.image = imgEl.src || imgEl.content;
+        if (imgEl) product.image = imgEl.src || imgEl.content || '';
 
-        const priceEl = document.querySelector('.product-price-current') || document.querySelector('.price-current');
-        if (priceEl) product.price = parsePrice(priceEl.innerText);
-
-        // Weight (same logic)
-        const bodyText = document.body.innerText;
-        const weightMatch = bodyText.match(/(?:weight|poids)[:\s]+([\d.,]+)\s*(kg|g|lb)/i);
-        if (weightMatch) {
-            const num = parseFloat(weightMatch[1].replace(',', '.'));
-            const unit = weightMatch[2].toLowerCase();
-            if (unit === 'kg') product.weight = num * 1000;
-            else if (unit === 'g') product.weight = num;
-            else if (unit === 'lb') product.weight = num * 453.592;
-        }
+        product.price = extractHighestPrice() || '';
+        product.weight = extractWeight() || '';
     }
 
     return product;
 }
 
-// Aggressive fallback search (scans ALL elements)
-function aggressiveScrape() {
-    let result = { title: '', price: '', weight: '' };
-
-    // Title
-    result.title = document.querySelector('.product-title')?.innerText?.trim() ||
-        document.querySelector('h1')?.innerText?.trim() || '';
-
-    // Price - find any element with US$ pattern
-    const allElements = [...document.querySelectorAll('*')];
-    const priceEl = allElements.find(el => /US\s*\$\s*\d/.test(el.innerText) && el.innerText.length < 50);
-    if (priceEl) {
-        const match = priceEl.innerText.match(/US\s*\$\s*([\d.,]+)/);
-        if (match) result.price = parseFloat(match[1].replace(',', ''));
-    }
-
-    // Weight - find any element with kg
-    const weightEl = allElements.find(el => /\d+[.,]?\d*\s*kg/i.test(el.innerText) && el.innerText.length < 100);
-    if (weightEl) {
-        const match = weightEl.innerText.match(/([\d.,]+)\s*kg/i);
-        if (match) result.weight = parseFloat(match[1].replace(',', '.')) * 1000;
-    }
-
-    return result;
-}
-
-// Listener for messages from popup
+// === Message listener ===
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "scrape") {
         // Scroll to trigger lazy-load
         window.scrollTo(0, 300);
 
-        // Wait a bit for content to load, then scrape
+        // Wait for content to load, then scrape
         setTimeout(() => {
-            let data = scrapeProduct();
-
-            // If main scraper didn't find price or weight, try aggressive fallback
-            if (!data.price || !data.weight) {
-                const fallback = aggressiveScrape();
-                if (!data.price && fallback.price) data.price = fallback.price;
-                if (!data.weight && fallback.weight) data.weight = fallback.weight;
-                if (!data.title && fallback.title) data.title = fallback.title;
-            }
-
+            const data = scrapeProduct();
             console.log('[Alibaba Scraped]', data);
             sendResponse(data);
         }, 500);
