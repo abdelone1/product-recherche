@@ -530,6 +530,58 @@ body {
 
 .table td {
     font-size: 14px;
+    vertical-align: middle;
+    /* Align verticalement */
+}
+
+/* Product Image in Table */
+.product-thumbnail {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+}
+
+.product-thumbnail-placeholder {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-muted);
+    font-size: 20px;
+}
+
+/* Form Image Preview */
+.image-preview-container {
+    margin-top: 8px;
+    width: 100%;
+    height: 150px;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-secondary);
+}
+
+.image-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.image-preview-text {
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
 }
 
 /* Score Badge */

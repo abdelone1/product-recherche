@@ -232,8 +232,13 @@
                                 <input type="number" id="weight" step="1" min="0" placeholder="350">
                             </div>
                             <div class="form-group">
-                                <label for="productLink">Lien Produit (Alibaba/Autre)</label>
-                                <input type="url" id="productLink" placeholder="https://alibaba.com/...">
+                                <label for="productLink">Lien Produit (L'image sera détectée auto.)</label>
+                                <input type="url" id="productLink" placeholder="https://alibaba.com/..."
+                                    onchange="detectProductImage(this.value, 'imagePreview')">
+                                <input type="hidden" id="productImage">
+                                <div class="image-preview-container" id="imagePreview">
+                                    <span class="image-preview-text">Collez le lien pour voir l'image ici</span>
+                                </div>
                             </div>
                         </div>
 
@@ -395,6 +400,7 @@
                     <table class="table" id="validatedProductsTable">
                         <thead>
                             <tr>
+                                <th>Image</th>
                                 <th>Produit</th>
                                 <th>Date</th>
                                 <th>Réseaux</th>
@@ -884,7 +890,12 @@
                     </div>
                     <div class="form-group">
                         <label for="editProductLink">Lien Produit</label>
-                        <input type="url" id="editProductLink">
+                        <input type="url" id="editProductLink"
+                            onchange="detectProductImage(this.value, 'editImagePreview')">
+                        <input type="hidden" id="editProductImage">
+                        <div class="image-preview-container" id="editImagePreview">
+                            <span class="image-preview-text">Image actuelle</span>
+                        </div>
                     </div>
                 </div>
 

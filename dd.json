@@ -1,0 +1,110 @@
+[
+  {
+    "id": "vacuum-9000pa-car",
+    "name": "Aspirateur Voiture Sans Fil 'Typhon' 9000PA",
+    "buyPrice": "8.50",
+    "sellPrice": "39.00",
+    "weight": "550",
+    "link": "https://www.alibaba.com/trade/search?SearchText=handheld+car+vacuum+cleaner+9000pa+cordless",
+    "countries": [
+      "SN",
+      "CI",
+      "ML",
+      "BF",
+      "TG"
+    ],
+    "criteria": {
+      "audience": true,
+      "problem": true,
+      "wow": true,
+      "competition": true,
+      "upsell": false
+    },
+    "notes": "HARMATTAN 🌪️. Indispensable de Janvier à Mars contre la poussière rouge. Démo vidéo facile (aspirer des cailloux). Marge élevée pour absorber vos coûts de pub.",
+    "score": 92,
+    "grade": "A",
+    "profit": 12.56,
+    "validated": true
+  },
+  {
+    "id": "hy300-projector-4k",
+    "name": "Projecteur Portable HY300 Android 11",
+    "buyPrice": "28.00",
+    "sellPrice": "65.00",
+    "weight": "800",
+    "link": "https://www.alibaba.com/trade/search?SearchText=HY300+projector+4k+android+11",
+    "countries": [
+      "SN",
+      "CI",
+      "ML",
+      "BF",
+      "TG"
+    ],
+    "criteria": {
+      "audience": true,
+      "problem": false,
+      "wow": true,
+      "competition": true,
+      "upsell": true
+    },
+    "notes": "DIVERTISSEMENT FAMILLE 🎬. Très forte demande pour transformer le salon en cinéma (Netflix intégré). Effet WOW visuel énorme. Marge très confortable pour couvrir vos 17$ de frais.",
+    "score": 90,
+    "grade": "A",
+    "profit": 19.06,
+    "validated": false
+  },
+  {
+    "id": "silver-crest-4500w",
+    "name": "Blender Ultra-Puissant 'Silver Crest' 4500W",
+    "buyPrice": "13.00",
+    "sellPrice": "38.00",
+    "weight": "1200",
+    "link": "https://www.alibaba.com/trade/search?SearchText=silver+crest+blender+heavy+duty+4500w",
+    "countries": [
+      "SN",
+      "CI",
+      "ML",
+      "BF",
+      "TG"
+    ],
+    "criteria": {
+      "audience": true,
+      "problem": true,
+      "wow": true,
+      "competition": true,
+      "upsell": false
+    },
+    "notes": "CUISINE RAMADAN 🍲. Le roi de la cuisine pour piler foutou/igname/glace. La vidéo doit montrer qu'il écrase une bouteille en verre (Effet Wow). Attention au poids pour le transport.",
+    "score": 88,
+    "grade": "B",
+    "profit": 7.06,
+    "validated": true
+  },
+  {
+    "id": "quran-speaker-touch",
+    "name": "Veilleuse Coranique Tactile (Quran Speaker)",
+    "buyPrice": "11.50",
+    "sellPrice": "35.00",
+    "weight": "400",
+    "link": "https://www.alibaba.com/trade/search?SearchText=touch+lamp+quran+speaker+sq112",
+    "countries": [
+      "SN",
+      "CI",
+      "ML",
+      "BF",
+      "TG"
+    ],
+    "criteria": {
+      "audience": true,
+      "problem": false,
+      "wow": true,
+      "competition": false,
+      "upsell": true
+    },
+    "notes": "CADEAU RAMADAN 🎁. Produit émotionnel fort. Change de couleur au toucher + Récitation complète. Marge suffisante. Cibler les femmes cherchant des cadeaux pour parents/enfants.",
+    "score": 94,
+    "grade": "A",
+    "profit": 5.56,
+    "validated": false
+  }
+]

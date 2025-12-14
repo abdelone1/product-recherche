@@ -1355,6 +1355,7 @@ function getFormData() {
         sellPrice: document.getElementById('sellPrice').value,
         weight: document.getElementById('weight').value,
         link: document.getElementById('productLink').value,
+        image: document.getElementById('productImage').value, // Add image
         countries: selectedCountries,
         criteria: {
             audience: document.getElementById('criteriaAudience').checked,
@@ -1365,6 +1366,89 @@ function getFormData() {
         },
         notes: document.getElementById('notes').value
     };
+}
+
+// ============================================
+// IMAGE AUTO-DETECTION (MICROLINK API)
+// ============================================
+
+async function detectProductImage(url, previewId) {
+    if (!url || !url.startsWith('http')) return;
+
+    const previewContainer = document.getElementById(previewId);
+    const hiddenInput = previewId === 'imagePreview' ? document.getElementById('productImage') : document.getElementById('editProductImage');
+
+    // Show loading state
+    previewContainer.innerHTML = '<span class="image-preview-text">🔄 Recherche image...</span>';
+
+    try {
+        // STRATEGY 1: Microlink API
+        const microlinkUrl = `https://api.microlink.io?url=${encodeURIComponent(url)}&palette=true`;
+        let response = await fetch(microlinkUrl);
+        let data = await response.json();
+
+        if (data.status === 'success' && data.data.image) {
+            applyImage(data.data.image.url, previewContainer, hiddenInput);
+            return;
+        }
+
+        // STRATEGY 2: JSONLink API (Fallback)
+        previewContainer.innerHTML = '<span class="image-preview-text">🔄 Tentative secondaire...</span>';
+        const jsonlinkUrl = `https://jsonlink.io/api/extract?url=${encodeURIComponent(url)}`;
+        response = await fetch(jsonlinkUrl);
+        data = await response.json();
+
+        if (data.images && data.images.length > 0) {
+            applyImage(data.images[0], previewContainer, hiddenInput);
+            return;
+        }
+
+        // FAILURE: Reveal Manual Input
+        throw new Error("No image found");
+
+    } catch (err) {
+        console.error('Auto-detection failed:', err);
+        handleDetectionFailure(previewContainer, hiddenInput);
+    }
+}
+
+function applyImage(imageUrl, container, input) {
+    // Show image
+    container.innerHTML = `<img src="${imageUrl}" class="image-preview-img" alt="Product Preview">`;
+    // Update input
+    input.value = imageUrl;
+    if (input.type === 'text') input.type = 'hidden'; // Hide back if it was revealed
+    showToast('Image détectée avec succès !');
+}
+
+function handleDetectionFailure(container, input) {
+    container.innerHTML = `
+        <div style="text-align:center; padding-top: 20px;">
+            <span style="display:block; margin-bottom:10px; color:#e53e3e;">❌ Image protégée par le site.</span>
+            <small style="color:var(--text-secondary);">Alibaba/Amazon bloquent souvent le robot automatique.</small>
+        </div>
+    `;
+
+    // Reveal the manual input only if it's hidden
+    if (input.type === 'hidden') {
+        input.type = 'url'; // Reveal
+        input.className = 'form-control';
+        input.placeholder = '👉 Collez le lien de l\'image ici (Clic droit > Copier l\'adresse de l\'image)';
+
+        // Inline styles for visibility
+        input.style.display = 'block';
+        input.style.width = '100%';
+        input.style.marginTop = '10px';
+        input.style.padding = '12px';
+        input.style.border = '2px dashed #e53e3e';
+        input.style.borderRadius = '8px';
+        input.style.background = '#2d3748';
+        input.style.color = '#fff';
+
+        input.focus();
+    }
+
+    showToast('Mode manuel activé (Sécurité Site)', 5000);
 }
 
 function handleProductSubmit(e) {
@@ -1417,7 +1501,16 @@ function openEditModal(productId) {
     document.getElementById('editSellPrice').value = product.sellPrice;
     document.getElementById('editWeight').value = product.weight || '';
     document.getElementById('editProductLink').value = product.link || '';
+    document.getElementById('editProductImage').value = product.image || ''; // Load image url
     document.getElementById('editNotes').value = product.notes || '';
+
+    // Set Image Preview for Edit
+    const editPreview = document.getElementById('editImagePreview');
+    if (product.image) {
+        editPreview.innerHTML = `<img src="${product.image}" class="image-preview-img" alt="Product Preview">`;
+    } else {
+        editPreview.innerHTML = '<span class="image-preview-text">Aucune image</span>';
+    }
 
     // Set criteria
     document.getElementById('editCriteriaAudience').checked = product.criteria?.audience || false;
@@ -1460,6 +1553,7 @@ function handleEditSubmit(e) {
         sellPrice: document.getElementById('editSellPrice').value,
         weight: document.getElementById('editWeight').value,
         link: document.getElementById('editProductLink').value,
+        image: document.getElementById('editProductImage').value, // Save edited image
         countries: selectedCountries,
         criteria: {
             audience: document.getElementById('editCriteriaAudience').checked,
@@ -1863,6 +1957,12 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated)
 
         return `
         <tr>
+            <td>
+                ${product.image
+                ? `<img src="${product.image}" class="product-thumbnail" alt="${escapeHtml(product.name)}" onclick="window.open('${product.image}', '_blank')">`
+                : `<div class="product-thumbnail-placeholder">${product.name.charAt(0)}</div>`
+            }
+            </td>
             <td><strong>${escapeHtml(product.name)}</strong></td>
             <td>${product.date}</td>
             <td>${formatSocialIcons(product.name)}</td>
