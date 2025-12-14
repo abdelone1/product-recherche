@@ -38,10 +38,36 @@ function scrapeProduct() {
         }
 
         const text = element.innerText;
-        const matches = text.match(/([0-9.,]+)/g);
+        // Match price patterns: $12.82, 12,82€, 12.82, etc.
+        const matches = text.match(/[\d]+[.,]?\d*/g);
         if (!matches) return 0;
 
-        const prices = matches.map(m => parseFloat(m.replace(/,/g, ''))).filter(n => !isNaN(n));
+        const prices = matches.map(m => {
+            // Handle European format: 12,82 -> 12.82
+            // Handle thousands: 1,234.56 or 1.234,56
+            let cleaned = m;
+            // If has both . and , determine which is decimal
+            if (m.includes('.') && m.includes(',')) {
+                // 1,234.56 (US) or 1.234,56 (EU)
+                if (m.lastIndexOf(',') > m.lastIndexOf('.')) {
+                    // EU format: 1.234,56
+                    cleaned = m.replace(/\./g, '').replace(',', '.');
+                } else {
+                    // US format: 1,234.56
+                    cleaned = m.replace(/,/g, '');
+                }
+            } else if (m.includes(',')) {
+                // Could be 1,234 (thousands) or 12,82 (EU decimal)
+                // If comma is followed by exactly 2 digits at end, it's EU decimal
+                if (/,\d{2}$/.test(m)) {
+                    cleaned = m.replace(',', '.');
+                } else {
+                    cleaned = m.replace(/,/g, '');
+                }
+            }
+            return parseFloat(cleaned);
+        }).filter(n => !isNaN(n) && n > 0 && n < 100000);
+
         if (prices.length === 0) return 0;
 
         return Math.max(...prices);
@@ -99,10 +125,28 @@ function scrapeProduct() {
 
         // Strategy 3: Heavy Scan for "0.000 kg" pattern in specific content areas
         if (!foundText) {
-            const specAreas = document.querySelectorAll('.do-entry-list, .attributes-list, .product-info, #specs-list');
+            const specAreas = document.querySelectorAll('.do-entry-list, .attributes-list, .product-info, #specs-list, .detail-decorate-list, .product-prop-list');
             for (let area of specAreas) {
                 const text = area.innerText;
-                const match = text.match(/(\d+(\.\d+)?)\s*(kg|g|lb)\b/i);
+                const match = text.match(/(\d+[.,]?\d*)\s*(kg|g|lb|kilogram|gram)\b/i);
+                if (match) {
+                    foundText = match[0];
+                    break;
+                }
+            }
+        }
+
+        // Strategy 4: Full page scan (last resort)
+        if (!foundText) {
+            const bodyText = document.body.innerText;
+            // Look for patterns like "Weight: 0.5 kg" or "0.500kg"
+            const weightPatterns = [
+                /weight[:\s]+(\d+[.,]?\d*)\s*(kg|g|lb)/i,
+                /poids[:\s]+(\d+[.,]?\d*)\s*(kg|g|lb)/i,
+                /(\d+[.,]\d{2,3})\s*kg/i,  // 0.500 kg
+            ];
+            for (let pattern of weightPatterns) {
+                const match = bodyText.match(pattern);
                 if (match) {
                     foundText = match[0];
                     break;
