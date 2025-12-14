@@ -1983,11 +1983,10 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
             actionButtons = `${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
         } else if (isCompleted) {
-            // Completed List: VIEW INFO + RESOLVE + LINK + Common
-            const btnResolve = `<button class="action-btn resolve" onclick="resolveInfo('${product.id}')" title="Marquer comme complété (Retour Mes Produits)" style="background: #48bb78;">✅</button>`;
-            const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
+            // Completed List: VIEW INFO + RETURN (instead of link) + Common
+            const btnReturn = `<button class="action-btn return" onclick="resolveInfo('${product.id}')" title="Retour vers Mes Produits">↩️</button>`;
             // Re-use btnRequestInfo as "View Info" (it opens the same modal)
-            actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnLink} ${btnResolve} ${btnDecline}`;
+            actionButtons = `${btnRequestInfo} ${btnSimulator} ${btnEdit} ${btnReturn} ${btnDecline}`;
         } else {
             // Main Active List: REQUEST INFO + VALIDATE + DECLINE
             const btnValidate = `<button class="action-btn validate" onclick="validateProduct('${product.id}')" title="Valider ce produit">✅</button>`;
