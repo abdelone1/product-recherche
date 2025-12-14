@@ -2011,10 +2011,12 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
             }
             </td>
             <td><strong>${escapeHtml(product.name)}</strong></td>
-            <td>${thirdColumnContent}</td> 
             <td>${product.date}</td>
+            <td>${thirdColumnContent}</td>
             <td>${product.link ? `<a href="${product.link}" target="_blank" class="chosen-product-link" title="${product.link}">🔗 Voir</a>` : '<span style="color: var(--text-muted);">-</span>'}</td>
             <td>${formatPrice(buyPrice)}</td>
+            <td>${product.weight || '-'}</td>
+            <td>${formatPrice(minSellPrice)}</td>
             
             <td class="profit-control-cell">
                 <div class="profit-control-wrapper normal">
