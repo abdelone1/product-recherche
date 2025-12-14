@@ -57,7 +57,7 @@ const USERS = {
     'yousf': 'yousf123'
 };
 
-let currentUser = sessionStorage.getItem('productResearchUser') || null;
+let currentUser = localStorage.getItem('productResearchUser') || null;
 
 // ============================================
 // State Management
@@ -948,7 +948,7 @@ function handleLogin(e) {
 
     if (USERS[username] && USERS[username] === password) {
         currentUser = username;
-        sessionStorage.setItem('productResearchUser', username);
+        localStorage.setItem('productResearchUser', username);
         checkAuth();
         // Check for extension data after login
         checkUrlParams();
@@ -1079,7 +1079,7 @@ function setupEventListeners() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            sessionStorage.removeItem('productResearchUser');
+            localStorage.removeItem('productResearchUser');
             currentUser = null;
             showToast('Déconnecté !');
             checkAuth();
