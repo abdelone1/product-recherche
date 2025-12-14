@@ -1973,9 +1973,9 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
         const btnEdit = `<button class="action-btn edit" onclick="openEditModal('${product.id}')" title="Modifier">✏️</button>`;
         const btnDecline = `<button class="action-btn decline" onclick="declineProduct('${product.id}')" title="Décliner" style="background: #e53e3e;">❌</button>`;
 
-        // Request Info Button (New)
+        // Request Info Button (New) - Using hourglass icon like sidebar
         const btnTitle = isCompleted ? 'Voir Info / Commentaire' : 'Demander Info (Transfert vers À compléter)';
-        const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="${btnTitle}">💬</button>`;
+        const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="${btnTitle}">⏳</button>`;
 
         if (isValidated) {
             // Validated List: COMMENT + RETURN + LINK + Common
