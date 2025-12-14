@@ -3169,11 +3169,13 @@ function checkUrlParams() {
         const name = urlParams.get('name');
         const image = urlParams.get('image');
         const price = urlParams.get('price');
+        const weight = urlParams.get('weight');
         const link = urlParams.get('link');
 
         // Pre-fill form
         if (name) document.getElementById('productName').value = name;
         if (price) document.getElementById('buyPrice').value = price;
+        if (weight) document.getElementById('weight').value = weight;
         if (link) document.getElementById('productLink').value = link;
 
         if (image) {

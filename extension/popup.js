@@ -26,6 +26,7 @@ document.getElementById('scrapeBtn').addEventListener('click', async () => {
                     name: response.title || '',
                     image: response.image || '',
                     price: response.price || '',
+                    weight: response.weight || '',
                     link: response.url || '',
                     autosave: 'true'
                 }).toString();
