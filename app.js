@@ -1901,12 +1901,12 @@ function renderProductsTable(filteredProducts = null) {
     const allProducts = filteredProducts || products;
 
     // Split products
-    // Active: Not validated, Not declined, Not needsInfo
-    const activeProducts = allProducts.filter(p => !p.validated && !p.declined && !p.needsInfo);
+    // Active: Not validated, Not declined, Not needs_info
+    const activeProducts = allProducts.filter(p => !p.validated && !p.declined && !p.needs_info);
     // Validated: Validated, Not declined
     const validatedProducts = allProducts.filter(p => p.validated && !p.declined);
     // Completed/Request Info: Needs Info, Not declined
-    const completedProducts = allProducts.filter(p => p.needsInfo && !p.declined);
+    const completedProducts = allProducts.filter(p => p.needs_info && !p.declined);
 
     // Render Active Products
     renderSpecificTable('allProductsBody', 'emptyProducts', 'allProductsTable', activeProducts, false);
@@ -1928,7 +1928,7 @@ function renderProductsTable(filteredProducts = null) {
     const activeCountEl = document.getElementById('activeProductCount');
     if (activeCountEl) {
         // Total active excluding others
-        const totalActive = products.filter(p => !p.validated && !p.declined && !p.needsInfo).length;
+        const totalActive = products.filter(p => !p.validated && !p.declined && !p.needs_info).length;
         if (filteredProducts) {
             activeCountEl.textContent = `${activeProducts.length} produits affichés sur ${totalActive} total`;
         } else {
@@ -2144,9 +2144,9 @@ function confirmRequestInfo() {
     const comment = document.getElementById('infoComment').value.trim() || 'Info manquante';
 
     // 1. Optimistic Update
-    product.needsInfo = true;
-    product.infoRequest = comment;
-    product.infoRequestedAt = new Date().toISOString();
+    product.needs_info = true;
+    product.info_request = comment;
+    product.info_requested_at = new Date().toISOString();
 
     renderProductsTable();
     updateDashboard();
@@ -2160,9 +2160,9 @@ function confirmRequestInfo() {
 
     // 2. Send to Cloud
     supabase.from('products').update({
-        needsInfo: true,
-        infoRequest: comment,
-        infoRequestedAt: new Date().toISOString()
+        needs_info: true,
+        info_request: comment,
+        info_requested_at: new Date().toISOString()
     }).eq('id', currentInfoId).select()
         .then(({ data, error }) => {
             if (error) {
@@ -2184,9 +2184,9 @@ function resolveInfo(productId) {
     if (!confirm('Avez-vous complété les informations pour ce produit ? Il retournera dans "Mes Produits".')) return;
 
     // 1. Optimistic Update
-    product.needsInfo = false;
+    product.needs_info = false;
     // Keep the comment as history or clear it? Clearing for now to reset state.
-    // product.infoRequest = null;
+    // product.info_request = null;
 
     renderProductsTable();
     updateDashboard();
@@ -2199,8 +2199,8 @@ function resolveInfo(productId) {
 
     // 2. Send to Cloud
     supabase.from('products').update({
-        needsInfo: false,
-        // infoRequest: null // Optional: clear or keep history
+        needs_info: false,
+        // info_request: null // Optional: clear or keep history
     }).eq('id', productId)
         .then(({ error }) => {
             if (error) console.error('Resolve Info error:', error);
