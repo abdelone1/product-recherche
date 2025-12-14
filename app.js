@@ -1354,9 +1354,9 @@ function getFormData() {
 
     return {
         name: document.getElementById('productName').value,
-        buyPrice: document.getElementById('buyPrice').value,
-        sellPrice: document.getElementById('sellPrice').value,
-        weight: document.getElementById('weight').value,
+        buyPrice: parseFloat(document.getElementById('buyPrice').value) || 0,
+        sellPrice: parseFloat(document.getElementById('sellPrice').value) || 0,
+        weight: parseFloat(document.getElementById('weight').value) || 0,
         link: document.getElementById('productLink').value,
         image: document.getElementById('productImage').value, // Add image
         countries: selectedCountries,
