@@ -933,6 +933,9 @@ function checkAuth() {
         // User is logged in
         if (overlay) overlay.classList.add('hidden');
         if (userBadge) userBadge.textContent = `👤 ${currentUser}`;
+
+        // Check for extension data when already logged in
+        checkUrlParams();
     } else {
         // User is NOT logged in, show overlay
         if (overlay) overlay.classList.remove('hidden');
