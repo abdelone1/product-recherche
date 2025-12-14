@@ -534,6 +534,36 @@ body {
     /* Align verticalement */
 }
 
+/* Product name - allow wrapping like in Produits Validés */
+.table td strong {
+    display: block;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.4;
+    min-width: 150px;
+    max-width: 300px;
+}
+
+/* Social icons - display all without truncation */
+.table td .social-icons,
+.table td .social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    white-space: normal;
+}
+
+/* Action buttons - display all without truncation */
+.table td:last-child {
+    white-space: normal;
+    min-width: 120px;
+}
+
+.table td .action-btn {
+    display: inline-flex;
+    margin: 2px;
+}
+
 /* Product Image in Table */
 .product-thumbnail {
     width: 60px;
