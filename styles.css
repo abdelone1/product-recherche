@@ -530,8 +530,9 @@ body {
 
 .table td {
     font-size: 14px;
-    vertical-align: middle;
-    /* Align verticalement */
+    vertical-align: top;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 /* Product Image in Table */
