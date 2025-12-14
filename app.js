@@ -2154,7 +2154,7 @@ function confirmRequestInfo() {
     // Switch to Completed Tab to show where it went
     document.querySelector('.nav-item[data-section="completed-products"]').click();
 
-    showToast('⏳ Demande d\'info enregistrée');
+    showToast('⏳ Demande enregistrée (v2)');
     logActivity('Demande Info', product.name);
     closeInfoModal();
 
@@ -2163,11 +2163,16 @@ function confirmRequestInfo() {
         needsInfo: true,
         infoRequest: comment,
         infoRequestedAt: new Date().toISOString()
-    }).eq('id', currentInfoId)
-        .then(({ error }) => {
+    }).eq('id', currentInfoId).select()
+        .then(({ data, error }) => {
             if (error) {
                 console.error('Request Info error:', error);
-                showToast('Erreur synchro cloud');
+                showToast('❌ Erreur Cloud: ' + error.message);
+            } else {
+                console.log('Update success:', data);
+                if (!data || data.length === 0) {
+                    console.warn('No rows updated');
+                }
             }
         });
 }
