@@ -534,65 +534,6 @@ body {
     /* Align verticalement */
 }
 
-/* Product Name wrapping */
-.table td strong {
-    display: block;
-    max-width: 200px;
-    word-wrap: break-word;
-    white-space: normal;
-    line-height: 1.4;
-}
-
-/* Action buttons wrapper */
-.table td:last-child {
-    white-space: nowrap;
-}
-
-.table td .action-btn {
-    margin: 2px;
-}
-
-/* Responsive Table */
-@media (max-width: 1200px) {
-    .table td:last-child {
-        white-space: normal;
-    }
-
-    .table td .action-btn {
-        display: inline-block;
-        margin: 3px;
-    }
-
-    .table td strong {
-        max-width: 150px;
-    }
-}
-
-@media (max-width: 768px) {
-
-    .table th,
-    .table td {
-        padding: 12px 8px;
-        font-size: 12px;
-    }
-
-    .table td strong {
-        max-width: 100px;
-        font-size: 12px;
-    }
-
-    .product-thumbnail {
-        width: 40px;
-        height: 40px;
-    }
-
-    .product-thumbnail-placeholder {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-    }
-}
-
 /* Product Image in Table */
 .product-thumbnail {
     width: 60px;
