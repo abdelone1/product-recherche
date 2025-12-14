@@ -3158,3 +3158,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+
+// Function to handle URL parameters from Extension
+function checkUrlParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+
+    if (action === 'add') {
+        const name = urlParams.get('name');
+        const image = urlParams.get('image');
+        const price = urlParams.get('price');
+        const link = urlParams.get('link');
+
+        // Pre-fill form
+        if (name) document.getElementById('productName').value = name;
+        if (price) document.getElementById('buyPrice').value = price;
+        if (link) document.getElementById('productLink').value = link;
+
+        if (image) {
+            document.getElementById('productImage').value = image;
+            const preview = document.getElementById('imagePreview');
+            if (preview) preview.innerHTML = `<img src="${image}" class="image-preview-img" alt="Product Preview">`;
+        }
+
+        const autosave = urlParams.get('autosave');
+        if (autosave === 'true' && name && link) {
+            // Switch to Add Product view so specific form elements are active/visible
+            if (typeof navigateToSection === 'function') {
+                navigateToSection('add-product');
+            }
+
+            // Wait a moment for UI to settle then save
+            setTimeout(() => {
+                showToast('🚀 Sauvegarde automatique...');
+                // Trigger form submission
+                const event = new Event('submit', { cancelable: true });
+                handleProductSubmit(event);
+            }, 800);
+        } else {
+            if (typeof navigateToSection === 'function') {
+                navigateToSection('add-product');
+            }
+            showToast('Données importées depuis l\'extension ! 🚀');
+        }
+
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+}
