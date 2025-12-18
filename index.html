@@ -69,6 +69,10 @@
                 <span class="nav-icon">✅</span>
                 <span class="nav-text">Produits Validés</span>
             </a>
+            <a href="#ready-for-ads" class="nav-item" data-section="ready-for-ads">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-text">Prêts à Tester</span>
+            </a>
             <a href="#completed-products" class="nav-item" data-section="completed-products">
                 <span class="nav-icon">⏳</span>
                 <span class="nav-text">Produits à compléter</span>
@@ -430,6 +434,45 @@
                         <span class="empty-icon">🏆</span>
                         <p>Aucun produit validé pour le moment</p>
                         <p class="empty-hint">Validez des produits depuis votre liste "Mes Produits"</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ready for Ads Section -->
+        <section class="section hidden" id="ready-for-ads-section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🚀 Produits Prêts à Tester (Ads)</h2>
+                    <div class="header-actions">
+                        <span class="badge badge-primary" id="readyForAdsCount">0 produits</span>
+                        <button class="btn btn-secondary" id="exportGoogleSheetsBtn"
+                            title="Exporter pour Google Sheets">
+                            📊 Exporter CSV
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="table" id="readyForAdsTable">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Campaign</th>
+                                <th>Pays</th>
+                                <th>Primary Text</th>
+                                <th>Headline</th>
+                                <th>Media</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="readyForAdsBody">
+                            <!-- Products will be inserted here -->
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyReadyForAds">
+                        <span class="empty-icon">🚀</span>
+                        <p>Aucun produit prêt pour le test ads</p>
+                        <p class="empty-hint">Préparez des produits validés pour le test depuis "Produits Validés"</p>
                     </div>
                 </div>
             </div>
@@ -1078,13 +1121,87 @@
         </div>
     </div>
 
+    <!-- Ready for Ads Modal -->
+    <div class="modal" id="readyForAdsModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width: 550px;">
+            <div class="modal-header">
+                <h2>🚀 Préparer pour Test Ads</h2>
+                <button class="modal-close" id="closeReadyForAdsModal">×</button>
+            </div>
+            <div style="padding: 24px;">
+                <p id="readyForAdsProductName" style="margin-bottom: 16px; color: var(--text-secondary);"></p>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adCampaignName">Campaign Name (2 mots) *</label>
+                        <input type="text" id="adCampaignName" placeholder="Lampe LED" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adCountry">Pays *</label>
+                        <select id="adCountry" required>
+                            <option value="">-- Choisir --</option>
+                            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+                            <option value="SN">🇸🇳 Sénégal</option>
+                            <option value="BF">🇧🇫 Burkina Faso</option>
+                            <option value="TG">🇹🇬 Togo</option>
+                            <option value="NE">🇳🇪 Niger</option>
+                            <option value="ML">🇲🇱 Mali</option>
+                            <option value="BJ">🇧🇯 Bénin</option>
+                            <option value="GN">🇬🇳 Guinée</option>
+                            <option value="TD">🇹🇩 Tchad</option>
+                            <option value="GA">🇬🇦 Gabon</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adWebsiteUrl">Website URL *</label>
+                    <input type="url" id="adWebsiteUrl" placeholder="https://votre-boutique.com/produit" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adImageUrl">Image URL</label>
+                        <input type="url" id="adImageUrl" placeholder="https://... (si pas de vidéo)">
+                    </div>
+                    <div class="form-group">
+                        <label for="adVideoUrl">Video URL</label>
+                        <input type="url" id="adVideoUrl" placeholder="https://... (si pas d'image)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="adThumbnailUrl">Video Thumbnail URL (optionnel)</label>
+                    <input type="url" id="adThumbnailUrl" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label for="adPrimaryText">Primary Text * (texte principal de la pub)</label>
+                    <textarea id="adPrimaryText" rows="3"
+                        placeholder="🔥 Découvrez cette incroyable lampe LED..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="adHeadline">Headline * (titre accrocheur)</label>
+                    <input type="text" id="adHeadline" placeholder="Offre Limitée -50%!">
+                </div>
+
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" id="cancelReadyForAds">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirmReadyForAds">🚀 Préparer pour Test</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <span class="toast-icon">✓</span>
         <span class="toast-message" id="toastMessage">Action réussie!</span>
     </div>
 
-    <script src="app.js?v=2"></script>
+    <script src="app.js?v=3"></script>
 </body>
 
 </html>

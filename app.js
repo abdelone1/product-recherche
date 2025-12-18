@@ -1982,11 +1982,12 @@ function renderSpecificTable(bodyId, emptyId, tableId, productList, isValidated,
         const btnRequestInfo = `<button class="action-btn request-info" onclick="openInfoModal('${product.id}')" title="${btnTitle}">⏳</button>`;
 
         if (isValidated) {
-            // Validated List: COMMENT + RETURN + LINK + Common
+            // Validated List: COMMENT + READY FOR ADS + RETURN + LINK + Common
             const btnComment = `<button class="action-btn comment" onclick="openCommentModal('${product.id}')" title="Ajouter/Voir commentaire">💬</button>`;
+            const btnReadyForAds = `<button class="action-btn ready-ads" onclick="openReadyForAdsModal('${product.id}')" title="Prêt pour test ads" style="background: #38a169;">🚀</button>`;
             const btnReturn = `<button class="action-btn return" onclick="unvalidateProduct('${product.id}')" title="Remettre en liste active">↩️</button>`;
             const btnLink = product.link ? `<a href="${product.link}" target="_blank" class="action-btn link" title="Voir le produit">🔗</a>` : '';
-            actionButtons = `${btnComment} ${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
+            actionButtons = `${btnComment} ${btnReadyForAds} ${btnSimulator} ${btnEdit} ${btnLink} ${btnReturn}`;
         } else if (isCompleted) {
             // Completed List: VIEW INFO + RETURN (instead of link) + Common
             const btnReturn = `<button class="action-btn return" onclick="resolveInfo('${product.id}')" title="Retour vers Mes Produits">↩️</button>`;
@@ -3142,6 +3143,14 @@ navigateToSection = function (sectionId) {
         // Trigger initial calculation
         setTimeout(autoCalculate, 100);
     }
+
+    // Add ready-for-ads to titles
+    if (sectionId === 'ready-for-ads') {
+        document.getElementById('pageTitle').textContent = 'Prêts à Tester';
+        document.getElementById('pageSubtitle').textContent = 'Produits prêts pour le test ads';
+        // Render the table
+        renderReadyForAdsTable();
+    }
 };
 
 // Toggle advanced parameters
@@ -3420,3 +3429,244 @@ function checkUrlParams() {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
+
+// ============================================
+// Ready for Ads Feature
+// ============================================
+
+let currentReadyForAdsProductId = null;
+
+// Open Ready for Ads Modal
+function openReadyForAdsModal(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    currentReadyForAdsProductId = productId;
+
+    // Set product name in modal
+    const productNameEl = document.getElementById('readyForAdsProductName');
+    if (productNameEl) productNameEl.textContent = `Produit: ${product.name}`;
+
+    // Pre-fill with existing data if available
+    const campaign = product.adCampaign || {};
+
+    // Auto-generate campaign name from product name (first 2 words)
+    const autoName = product.name.split(' ').slice(0, 2).join(' ');
+    document.getElementById('adCampaignName').value = campaign.campaignName || autoName;
+    document.getElementById('adCountry').value = campaign.country || (product.countries && product.countries[0]) || '';
+    document.getElementById('adWebsiteUrl').value = campaign.websiteUrl || '';
+    document.getElementById('adImageUrl').value = campaign.imageUrl || product.image || '';
+    document.getElementById('adVideoUrl').value = campaign.videoUrl || '';
+    document.getElementById('adThumbnailUrl').value = campaign.thumbnailUrl || '';
+    document.getElementById('adPrimaryText').value = campaign.primaryText || '';
+    document.getElementById('adHeadline').value = campaign.headline || '';
+
+    // Show modal
+    const modal = document.getElementById('readyForAdsModal');
+    if (modal) modal.classList.add('active');
+}
+
+// Close Ready for Ads Modal
+function closeReadyForAdsModal() {
+    const modal = document.getElementById('readyForAdsModal');
+    if (modal) modal.classList.remove('active');
+    currentReadyForAdsProductId = null;
+}
+
+// Confirm Ready for Ads
+function confirmReadyForAds() {
+    if (!currentReadyForAdsProductId) return;
+
+    const product = products.find(p => p.id === currentReadyForAdsProductId);
+    if (!product) return;
+
+    // Get form values
+    const campaignName = document.getElementById('adCampaignName').value.trim();
+    const country = document.getElementById('adCountry').value;
+    const websiteUrl = document.getElementById('adWebsiteUrl').value.trim();
+    const imageUrl = document.getElementById('adImageUrl').value.trim();
+    const videoUrl = document.getElementById('adVideoUrl').value.trim();
+    const thumbnailUrl = document.getElementById('adThumbnailUrl').value.trim();
+    const primaryText = document.getElementById('adPrimaryText').value.trim();
+    const headline = document.getElementById('adHeadline').value.trim();
+
+    // Validation
+    if (!campaignName || !country || !websiteUrl) {
+        showToast('❌ Campaign Name, Pays et Website URL sont obligatoires');
+        return;
+    }
+    if (!imageUrl && !videoUrl) {
+        showToast('❌ Image URL ou Video URL est obligatoire');
+        return;
+    }
+    if (!primaryText || !headline) {
+        showToast('❌ Primary Text et Headline sont obligatoires');
+        return;
+    }
+
+    // Save ad campaign data
+    product.adCampaign = {
+        campaignName,
+        country,
+        websiteUrl,
+        imageUrl,
+        videoUrl,
+        thumbnailUrl,
+        primaryText,
+        headline
+    };
+    product.readyForAds = true;
+
+    // Update UI
+    renderProductsTable();
+    renderReadyForAdsTable();
+    updateDashboard();
+    closeReadyForAdsModal();
+    showToast('🚀 Produit prêt pour test ads !');
+    logActivity('Prêt pour Test', product.name);
+
+    // Send to Cloud
+    supabaseClient.from('products').update({
+        readyForAds: true,
+        adCampaign: product.adCampaign
+    }).eq('id', currentReadyForAdsProductId)
+        .then(({ error }) => {
+            if (error) console.error('Ready for Ads error:', error);
+        });
+}
+
+// Render Ready for Ads Table
+function renderReadyForAdsTable() {
+    const tbody = document.getElementById('readyForAdsBody');
+    const emptyState = document.getElementById('emptyReadyForAds');
+    const table = document.getElementById('readyForAdsTable');
+    const countBadge = document.getElementById('readyForAdsCount');
+
+    if (!tbody || !table) return;
+
+    const readyProducts = products.filter(p => p.readyForAds && !p.declined);
+
+    if (countBadge) countBadge.textContent = `${readyProducts.length} produits`;
+
+    if (readyProducts.length === 0) {
+        table.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+
+    table.style.display = 'table';
+    if (emptyState) emptyState.style.display = 'none';
+
+    const countryNames = {
+        'CI': '🇨🇮 CI', 'SN': '🇸🇳 SN', 'BF': '🇧🇫 BF', 'TG': '🇹🇬 TG',
+        'NE': '🇳🇪 NE', 'ML': '🇲🇱 ML', 'BJ': '🇧🇯 BJ', 'GN': '🇬🇳 GN',
+        'TD': '🇹🇩 TD', 'GA': '🇬🇦 GA'
+    };
+
+    tbody.innerHTML = readyProducts.map(p => {
+        const campaign = p.adCampaign || {};
+        const mediaIcon = campaign.videoUrl ? '🎬' : (campaign.imageUrl ? '🖼️' : '❓');
+        const mediaUrl = campaign.videoUrl || campaign.imageUrl || '';
+
+        return `
+            <tr>
+                <td>
+                    ${p.image ? `<img src="${p.image}" alt="${p.name}" class="product-thumb" style="width:50px;height:50px;object-fit:cover;border-radius:8px;">` : '📦'}
+                </td>
+                <td>
+                    <strong>${campaign.campaignName || p.name}</strong>
+                    <br><small style="color:var(--text-secondary)">${p.name}</small>
+                </td>
+                <td>${countryNames[campaign.country] || campaign.country || '-'}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${campaign.primaryText || ''}">${campaign.primaryText || '-'}</td>
+                <td>${campaign.headline || '-'}</td>
+                <td>
+                    ${mediaUrl ? `<a href="${mediaUrl}" target="_blank" title="Voir media">${mediaIcon}</a>` : '-'}
+                </td>
+                <td>
+                    <div class="action-buttons" style="display:flex;gap:4px;">
+                        <button class="btn-icon" onclick="openReadyForAdsModal('${p.id}')" title="Modifier">✏️</button>
+                        <button class="btn-icon" onclick="removeFromReadyForAds('${p.id}')" title="Retirer">↩️</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Remove from Ready for Ads
+function removeFromReadyForAds(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    product.readyForAds = false;
+    renderProductsTable();
+    renderReadyForAdsTable();
+    updateDashboard();
+    showToast('↩️ Produit retiré des "Prêts à Tester"');
+
+    // Send to Cloud
+    supabaseClient.from('products').update({ readyForAds: false }).eq('id', productId)
+        .then(({ error }) => {
+            if (error) console.error('Remove ready for ads error:', error);
+        });
+}
+
+// Export to Google Sheets CSV format
+function exportToGoogleSheetsCSV() {
+    const readyProducts = products.filter(p => p.readyForAds && !p.declined);
+
+    if (readyProducts.length === 0) {
+        showToast('❌ Aucun produit prêt à exporter');
+        return;
+    }
+
+    // CSV Headers
+    const headers = [
+        'Campaign Name',
+        'Country',
+        'Website URL',
+        'Image URL',
+        'Video URL',
+        'Video Thumbnail URL',
+        'Primary Text',
+        'Headline'
+    ];
+
+    // CSV Rows
+    const rows = readyProducts.map(p => {
+        const c = p.adCampaign || {};
+        return [
+            c.campaignName || '',
+            c.country || '',
+            c.websiteUrl || '',
+            c.imageUrl || '',
+            c.videoUrl || '',
+            c.thumbnailUrl || '',
+            `"${(c.primaryText || '').replace(/"/g, '""')}"`,
+            c.headline || ''
+        ].join(',');
+    });
+
+    const csv = [headers.join(','), ...rows].join('\n');
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ready_for_ads_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    showToast(`📊 ${readyProducts.length} produits exportés en CSV !`);
+}
+
+// Event Listeners for Ready for Ads Modal
+document.getElementById('closeReadyForAdsModal')?.addEventListener('click', closeReadyForAdsModal);
+document.getElementById('cancelReadyForAds')?.addEventListener('click', closeReadyForAdsModal);
+document.getElementById('confirmReadyForAds')?.addEventListener('click', confirmReadyForAds);
+document.getElementById('exportGoogleSheetsBtn')?.addEventListener('click', exportToGoogleSheetsCSV);
+
+// Close modal on overlay click
+document.getElementById('readyForAdsModal')?.querySelector('.modal-overlay')?.addEventListener('click', closeReadyForAdsModal);
