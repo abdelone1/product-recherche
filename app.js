@@ -45,7 +45,7 @@ const CONFIG = {
 const SUPABASE_URL = 'https://fryqwwiqainzhjiigsma.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyeXF3d2lxYWluemhqaWlnc21hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NDQ2NjMsImV4cCI6MjA4MTEyMDY2M30.8r-9kwBdxp6bhKtZR-IfNS3STfOttwHoJMsE3Yny778';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 console.log("⚡ Supabase initialized!");
 
@@ -947,7 +947,7 @@ async function handleLogin(e) {
     const errorEl = document.getElementById('loginError');
 
     // Query Supabase for user authentication
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('users')
         .select('username, password')
         .eq('username', username)
@@ -971,7 +971,7 @@ async function handleLogin(e) {
 function logActivity(action, productName) {
     if (!currentUser) return; // Don't log if no user
 
-    supabase.from('activity_logs').insert([{
+    supabaseClient.from('activity_logs').insert([{
         username: currentUser,
         action: action,
         product_name: productName || 'N/A'
@@ -981,7 +981,7 @@ function logActivity(action, productName) {
 }
 
 function loadActivityLogs() {
-    supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(100)
+    supabaseClient.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(100)
         .then(({ data, error }) => {
             if (error) {
                 console.error('Error loading logs:', error);
@@ -1496,7 +1496,7 @@ function handleProductSubmit(e) {
     };
 
     // Save to Supabase
-    supabase.from('products').insert([product])
+    supabaseClient.from('products').insert([product])
         .then(({ error }) => {
             if (error) throw error;
             showToast('Produit ajouté (Cloud) !');
@@ -1603,7 +1603,7 @@ function handleEditSubmit(e) {
     };
 
     // Update Supabase
-    supabase.from('products').update(updatePayload).eq('id', currentEditId)
+    supabaseClient.from('products').update(updatePayload).eq('id', currentEditId)
         .then(({ error }) => {
             if (error) throw error;
 
@@ -1634,7 +1634,7 @@ function deleteProduct(productId) {
     const productName = productToDelete ? productToDelete.name : 'Inconnu';
 
     if (confirm('Êtes-vous sûr de vouloir supprimer ce produit?')) {
-        supabase.from('products').delete().eq('id', productId)
+        supabaseClient.from('products').delete().eq('id', productId)
             .then(({ error }) => {
                 if (error) throw error;
                 showToast('Produit supprimé (Cloud) !');
@@ -2065,7 +2065,7 @@ function validateProduct(productId) {
     }
 
     // 2. Send to Cloud (Background)
-    supabase.from('products').update({ validated: true }).eq('id', productId)
+    supabaseClient.from('products').update({ validated: true }).eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error validating product: ", error);
@@ -2090,7 +2090,7 @@ function deleteProduct(productId) {
     logActivity('Suppression', product.name);
 
     // 2. Send to Cloud (Background)
-    supabase.from('products').delete().eq('id', productId)
+    supabaseClient.from('products').delete().eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error deleting product: ", error);
@@ -2136,7 +2136,7 @@ function confirmDeclineProduct() {
     logActivity('Décliné', product.name + (reason !== 'Aucune raison spécifiée' ? ' - ' + reason : ''));
 
     // 2. Send to Cloud
-    supabase.from('products').update({
+    supabaseClient.from('products').update({
         declined: true,
         declineReason: reason,
         declinedAt: new Date().toISOString()
@@ -2196,7 +2196,7 @@ function confirmRequestInfo() {
     closeInfoModal();
 
     // 2. Send to Cloud (Background)
-    supabase.from('products').update({ needs_info: true, info_request: comment }).eq('id', productId)
+    supabaseClient.from('products').update({ needs_info: true, info_request: comment }).eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error requesting info: ", error);
@@ -2222,7 +2222,7 @@ function resolveInfo(productId) {
     document.querySelector('.nav-item[data-section="products"]').click();
 
     // 2. Send to Cloud (Background) - EXACTLY like validateProduct
-    supabase.from('products').update({ needs_info: false }).eq('id', productId)
+    supabaseClient.from('products').update({ needs_info: false }).eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error resolving info: ", error);
@@ -2270,7 +2270,7 @@ function saveComment() {
     closeCommentModal();
 
     // 2. Send to Cloud
-    supabase.from('products').update({ notes: comment }).eq('id', productId)
+    supabaseClient.from('products').update({ notes: comment }).eq('id', productId)
         .then(({ error }) => {
             if (error) {
                 console.error("Error saving comment: ", error);
@@ -2297,7 +2297,7 @@ function unvalidateProduct(productId) {
     logActivity('Annulation validation', product.name);
 
     // 2. Send to Cloud
-    supabase.from('products').update({ validated: false }).eq('id', productId)
+    supabaseClient.from('products').update({ validated: false }).eq('id', productId)
         .then(({ error }) => {
             if (error) console.error('Unvalidate error:', error);
         });
@@ -2319,7 +2319,7 @@ function restoreProduct(productId) {
     logActivity('Restauration', product.name);
 
     // 2. Send to Cloud
-    supabase.from('products').update({
+    supabaseClient.from('products').update({
         declined: false,
         declineReason: null,
         declinedAt: null
@@ -2428,7 +2428,7 @@ function loadProducts() {
                     id: p.id || Date.now().toString() + Math.random().toString(36).substr(2, 5)
                 }));
 
-                supabase.from('products').insert(productsToUpload)
+                supabaseClient.from('products').insert(productsToUpload)
                     .then(({ error }) => {
                         if (!error) {
                             console.log('Migration complete');
@@ -2447,7 +2447,7 @@ function loadProducts() {
     }
 
     // 2. Initial Load
-    supabase.from('products').select('*')
+    supabaseClient.from('products').select('*')
         .then(({ data, error }) => {
             if (error) console.error('Error loading:', error);
             else {
@@ -2463,11 +2463,11 @@ function loadProducts() {
         });
 
     // 3. Real-time Subscription
-    supabase.channel('products')
+    supabaseClient.channel('products')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
             console.log('Change received!', payload);
             // Refresh data on any change
-            supabase.from('products').select('*').then(({ data }) => {
+            supabaseClient.from('products').select('*').then(({ data }) => {
                 products = data || [];
                 updateDashboard();
                 renderProductsTable();
@@ -2582,7 +2582,7 @@ function handleImport(e) {
                     id: p.id || (Date.now().toString() + Math.random().toString(36).substr(2, 5))
                 }));
 
-                supabase.from('products').insert(productsToImport)
+                supabaseClient.from('products').insert(productsToImport)
                     .then(({ error }) => {
                         if (error) throw error;
                         showToast('Import terminé avec succès (Cloud) !');
@@ -2609,10 +2609,10 @@ function handleClearData() {
     if (confirm('⚠️ ATTENTION : Cela va supprimer TOUTES les données du Cloud pour tout le monde. Continuer ?')) {
         // Supabase doesn't support 'delete all' easily without a where clause, so we use a trick or delete by ID
         // For safety/simplicity in this app, we'll fetch all IDs and delete them (not efficient for huge data but fine here)
-        supabase.from('products').select('id').then(({ data }) => {
+        supabaseClient.from('products').select('id').then(({ data }) => {
             const ids = data.map(p => p.id);
             if (ids.length > 0) {
-                supabase.from('products').delete().in('id', ids)
+                supabaseClient.from('products').delete().in('id', ids)
                     .then(({ error }) => {
                         if (error) throw error;
                         showToast('Base de données Cloud entièrement effacée !');
@@ -2636,7 +2636,7 @@ function restoreDemoData() {
             validated: false
         }));
 
-        supabase.from('products').insert(samplesToInsert)
+        supabaseClient.from('products').insert(samplesToInsert)
             .then(({ error }) => {
                 if (error) {
                     console.error(error);
