@@ -2455,6 +2455,7 @@ function loadProducts() {
                 products = data || [];
                 updateDashboard();
                 renderProductsTable();
+                renderReadyForAdsTable(); // Render Ready for Ads products
 
                 // Update badge
                 const validCount = products.filter(p => p.validated).length;
@@ -2472,6 +2473,7 @@ function loadProducts() {
                 products = data || [];
                 updateDashboard();
                 renderProductsTable();
+                renderReadyForAdsTable(); // Render Ready for Ads products
 
                 const validCount = products.filter(p => p.validated).length;
                 const badge = document.getElementById('validatedCount');
