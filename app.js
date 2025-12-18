@@ -3517,7 +3517,7 @@ function confirmReadyForAds() {
         primaryText,
         headline
     };
-    product.readyForAds = true;
+    product.ready_for_ads = true;
 
     // Update UI
     renderProductsTable();
@@ -3527,10 +3527,10 @@ function confirmReadyForAds() {
     showToast('🚀 Produit prêt pour test ads !');
     logActivity('Prêt pour Test', product.name);
 
-    // Send to Cloud
+    // Send to Cloud (use snake_case for Supabase)
     supabaseClient.from('products').update({
-        readyForAds: true,
-        adCampaign: product.adCampaign
+        ready_for_ads: true,
+        ad_campaign: product.adCampaign
     }).eq('id', currentReadyForAdsProductId)
         .then(({ error }) => {
             if (error) console.error('Ready for Ads error:', error);
@@ -3546,7 +3546,7 @@ function renderReadyForAdsTable() {
 
     if (!tbody || !table) return;
 
-    const readyProducts = products.filter(p => p.readyForAds && !p.declined);
+    const readyProducts = products.filter(p => p.ready_for_ads && !p.declined);
 
     if (countBadge) countBadge.textContent = `${readyProducts.length} produits`;
 
@@ -3566,7 +3566,7 @@ function renderReadyForAdsTable() {
     };
 
     tbody.innerHTML = readyProducts.map(p => {
-        const campaign = p.adCampaign || {};
+        const campaign = p.ad_campaign || {};
         const mediaIcon = campaign.videoUrl ? '🎬' : (campaign.imageUrl ? '🖼️' : '❓');
         const mediaUrl = campaign.videoUrl || campaign.imageUrl || '';
 
@@ -3601,14 +3601,14 @@ function removeFromReadyForAds(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
-    product.readyForAds = false;
+    product.ready_for_ads = false;
     renderProductsTable();
     renderReadyForAdsTable();
     updateDashboard();
     showToast('↩️ Produit retiré des "Prêts à Tester"');
 
     // Send to Cloud
-    supabaseClient.from('products').update({ readyForAds: false }).eq('id', productId)
+    supabaseClient.from('products').update({ ready_for_ads: false }).eq('id', productId)
         .then(({ error }) => {
             if (error) console.error('Remove ready for ads error:', error);
         });
@@ -3616,7 +3616,7 @@ function removeFromReadyForAds(productId) {
 
 // Export to Google Sheets CSV format
 function exportToGoogleSheetsCSV() {
-    const readyProducts = products.filter(p => p.readyForAds && !p.declined);
+    const readyProducts = products.filter(p => p.ready_for_ads && !p.declined);
 
     if (readyProducts.length === 0) {
         showToast('❌ Aucun produit prêt à exporter');
