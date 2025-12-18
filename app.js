@@ -50,12 +50,9 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 console.log("⚡ Supabase initialized!");
 
 // ============================================
-// User Accounts (Simple Auth)
+// User Accounts (Supabase Auth)
 // ============================================
-const USERS = {
-    'abdel': 'abdel123',
-    'yousf': 'yousf123'
-};
+// Users are now stored in Supabase 'users' table
 
 let currentUser = localStorage.getItem('productResearchUser') || null;
 
@@ -943,13 +940,20 @@ function checkAuth() {
     }
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value.toLowerCase().trim();
     const password = document.getElementById('loginPassword').value;
     const errorEl = document.getElementById('loginError');
 
-    if (USERS[username] && USERS[username] === password) {
+    // Query Supabase for user authentication
+    const { data, error } = await supabase
+        .from('users')
+        .select('username, password')
+        .eq('username', username)
+        .single();
+
+    if (!error && data && data.password === password) {
         currentUser = username;
         localStorage.setItem('productResearchUser', username);
         checkAuth();
