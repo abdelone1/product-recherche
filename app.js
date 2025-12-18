@@ -3635,7 +3635,7 @@ async function removeFromReadyForAds(productId) {
     showToast('↩️ Produit retiré des "Prêts à Tester"');
 }
 
-// Export to Google Sheets CSV format
+// Export to Google Sheets CSV format (AdAuto.ai Bulk Ad Creation)
 function exportToGoogleSheetsCSV() {
     const readyProducts = products.filter(p => p.ready_for_ads && !p.declined);
 
@@ -3644,9 +3644,10 @@ function exportToGoogleSheetsCSV() {
         return;
     }
 
-    // CSV Headers
+    // CSV Headers matching AdAuto.ai template
     const headers = [
         'Campaign Name',
+        'Configuration Template',
         'Country',
         'Website URL',
         'Image URL',
@@ -3656,18 +3657,19 @@ function exportToGoogleSheetsCSV() {
         'Headline'
     ];
 
-    // CSV Rows
+    // CSV Rows (use ad_campaign from Supabase)
     const rows = readyProducts.map(p => {
-        const c = p.adCampaign || {};
+        const c = p.ad_campaign || {};
         return [
-            c.campaignName || '',
+            escapeCSV(c.campaignName || ''),
+            '', // Configuration Template (leave empty)
             c.country || '',
-            c.websiteUrl || '',
-            c.imageUrl || '',
-            c.videoUrl || '',
-            c.thumbnailUrl || '',
-            `"${(c.primaryText || '').replace(/"/g, '""')}"`,
-            c.headline || ''
+            escapeCSV(c.websiteUrl || ''),
+            escapeCSV(c.imageUrl || ''),
+            escapeCSV(c.videoUrl || ''),
+            escapeCSV(c.thumbnailUrl || ''),
+            escapeCSV(c.primaryText || ''),
+            escapeCSV(c.headline || '')
         ].join(',');
     });
 
@@ -3678,11 +3680,21 @@ function exportToGoogleSheetsCSV() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ready_for_ads_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `adauto_bulk_ads_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
 
-    showToast(`📊 ${readyProducts.length} produits exportés en CSV !`);
+    showToast(`📊 ${readyProducts.length} produits exportés pour AdAuto.ai !`);
+}
+
+// Helper to escape CSV values
+function escapeCSV(value) {
+    if (!value) return '';
+    // If contains comma, quote, or newline, wrap in quotes and escape quotes
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
 }
 
 // Event Listeners for Ready for Ads Modal
