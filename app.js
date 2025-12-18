@@ -3476,7 +3476,7 @@ function closeReadyForAdsModal() {
 }
 
 // Confirm Ready for Ads
-function confirmReadyForAds() {
+async function confirmReadyForAds() {
     if (!currentReadyForAdsProductId) return;
 
     const product = products.find(p => p.id === currentReadyForAdsProductId);
@@ -3506,8 +3506,8 @@ function confirmReadyForAds() {
         return;
     }
 
-    // Save ad campaign data
-    product.adCampaign = {
+    // Build ad campaign data
+    const adCampaignData = {
         campaignName,
         country,
         websiteUrl,
@@ -3517,7 +3517,30 @@ function confirmReadyForAds() {
         primaryText,
         headline
     };
+
+    // Save to Supabase FIRST
+    console.log('Saving to Supabase:', currentReadyForAdsProductId, adCampaignData);
+
+    const { data, error } = await supabaseClient
+        .from('products')
+        .update({
+            ready_for_ads: true,
+            ad_campaign: adCampaignData
+        })
+        .eq('id', currentReadyForAdsProductId)
+        .select();
+
+    if (error) {
+        console.error('Ready for Ads Supabase error:', error);
+        showToast('❌ Erreur de sauvegarde: ' + error.message);
+        return;
+    }
+
+    console.log('Supabase save successful:', data);
+
+    // Update local state AFTER successful save
     product.ready_for_ads = true;
+    product.ad_campaign = adCampaignData;
 
     // Update UI
     renderProductsTable();
@@ -3526,15 +3549,6 @@ function confirmReadyForAds() {
     closeReadyForAdsModal();
     showToast('🚀 Produit prêt pour test ads !');
     logActivity('Prêt pour Test', product.name);
-
-    // Send to Cloud (use snake_case for Supabase)
-    supabaseClient.from('products').update({
-        ready_for_ads: true,
-        ad_campaign: product.adCampaign
-    }).eq('id', currentReadyForAdsProductId)
-        .then(({ error }) => {
-            if (error) console.error('Ready for Ads error:', error);
-        });
 }
 
 // Render Ready for Ads Table
@@ -3597,21 +3611,28 @@ function renderReadyForAdsTable() {
 }
 
 // Remove from Ready for Ads
-function removeFromReadyForAds(productId) {
+async function removeFromReadyForAds(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
 
+    // Save to Supabase FIRST
+    const { error } = await supabaseClient
+        .from('products')
+        .update({ ready_for_ads: false })
+        .eq('id', productId);
+
+    if (error) {
+        console.error('Remove ready for ads error:', error);
+        showToast('❌ Erreur: ' + error.message);
+        return;
+    }
+
+    // Update local state AFTER successful save
     product.ready_for_ads = false;
     renderProductsTable();
     renderReadyForAdsTable();
     updateDashboard();
     showToast('↩️ Produit retiré des "Prêts à Tester"');
-
-    // Send to Cloud
-    supabaseClient.from('products').update({ ready_for_ads: false }).eq('id', productId)
-        .then(({ error }) => {
-            if (error) console.error('Remove ready for ads error:', error);
-        });
 }
 
 // Export to Google Sheets CSV format
