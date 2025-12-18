@@ -3449,8 +3449,8 @@ function openReadyForAdsModal(productId) {
     const productNameEl = document.getElementById('readyForAdsProductName');
     if (productNameEl) productNameEl.textContent = `Produit: ${product.name}`;
 
-    // Pre-fill with existing data if available
-    const campaign = product.adCampaign || {};
+    // Pre-fill with existing data if available (ad_campaign from Supabase)
+    const campaign = product.ad_campaign || {};
 
     // Auto-generate campaign name from product name (first 2 words)
     const autoName = product.name.split(' ').slice(0, 2).join(' ');
