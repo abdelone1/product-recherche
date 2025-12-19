@@ -3707,191 +3707,41 @@ document.getElementById('exportGoogleSheetsBtn')?.addEventListener('click', expo
 document.getElementById('readyForAdsModal')?.querySelector('.modal-overlay')?.addEventListener('click', closeReadyForAdsModal);
 
 // ============================================
-// Facebook Ads Library API Integration
+// Facebook Ads Library - Direct Link
 // ============================================
 
-// Toggle Facebook Token Configuration
-function toggleFbTokenConfig() {
-    const config = document.getElementById('fbTokenConfig');
-    if (config) {
-        config.style.display = config.style.display === 'none' ? 'block' : 'none';
-        // Load saved token if exists
-        const savedToken = localStorage.getItem('fb_access_token');
-        if (savedToken) {
-            document.getElementById('fbAccessToken').value = savedToken;
-        }
-    }
-}
+// Open Facebook Ads Library with search parameters
+function openFacebookAdsLibrary() {
+    const keyword = document.getElementById('fbSearchKeyword')?.value.trim() || '';
+    const country = document.getElementById('fbCountryFilter')?.value || 'CI';
+    const mediaType = document.getElementById('fbMediaFilter')?.value || 'all';
 
-// Save Facebook Access Token
-function saveFacebookToken() {
-    const tokenInput = document.getElementById('fbAccessToken');
-    const token = tokenInput.value.trim();
+    // Build Facebook Ad Library URL
+    let url = `https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=${country}`;
 
-    if (!token) {
-        showToast('❌ Veuillez entrer un token valide');
-        return;
+    // Add media type filter
+    if (mediaType !== 'all') {
+        url += `&media_type=${mediaType}`;
     }
 
-    localStorage.setItem('fb_access_token', token);
-    showToast('✅ Token Facebook sauvegardé !');
-    toggleFbTokenConfig();
-}
-
-// Search Facebook Ads
-async function searchFacebookAds() {
-    const keyword = document.getElementById('fbSearchKeyword').value.trim();
-    const country = document.getElementById('fbCountryFilter').value;
-    const mediaType = document.getElementById('fbMediaFilter').value;
-    const token = localStorage.getItem('fb_access_token');
-
-    if (!keyword) {
-        showToast('❌ Veuillez entrer un mot-clé de recherche');
-        return;
+    // Add search term if provided
+    if (keyword) {
+        url += `&q=${encodeURIComponent(keyword)}`;
     }
 
-    if (!token) {
-        showToast('⚠️ Configurez d\'abord votre Access Token Facebook');
-        toggleFbTokenConfig();
-        return;
+    // Open in new tab
+    window.open(url, '_blank');
+
+    if (keyword) {
+        showToast(`🔍 Recherche "${keyword}" sur Facebook Ads Library...`);
+    } else {
+        showToast('📱 Ouverture de Facebook Ads Library...');
     }
-
-    // Show loading state
-    document.getElementById('fbLoading').style.display = 'flex';
-    document.getElementById('fbAdsGrid').innerHTML = '';
-    document.getElementById('fbEmptyState').style.display = 'none';
-
-    try {
-        // Build API URL
-        const fields = 'id,ad_creation_time,ad_creative_bodies,ad_creative_link_captions,ad_creative_link_descriptions,ad_creative_link_titles,ad_snapshot_url,page_id,page_name,publisher_platforms';
-
-        let url = `https://graph.facebook.com/v18.0/ads_archive?access_token=${token}&search_terms=${encodeURIComponent(keyword)}&ad_type=ALL&ad_active_status=ACTIVE&fields=${fields}&limit=25`;
-
-        // Add country filter
-        if (country !== 'ALL') {
-            url += `&ad_reached_countries=["${country}"]`;
-        }
-
-        console.log('Searching Facebook Ads:', keyword, country);
-
-        const response = await fetch(url);
-        const data = await response.json();
-
-        console.log('Facebook Ads response:', data);
-
-        if (data.error) {
-            throw new Error(data.error.message || 'Erreur API Facebook');
-        }
-
-        // Hide loading
-        document.getElementById('fbLoading').style.display = 'none';
-
-        if (!data.data || data.data.length === 0) {
-            document.getElementById('fbEmptyState').style.display = 'block';
-            document.getElementById('fbEmptyState').innerHTML = `
-                <div class="empty-icon">🔍</div>
-                <h3>Aucune annonce trouvée</h3>
-                <p>Essayez un autre mot-clé ou changez le pays de recherche.</p>
-            `;
-            return;
-        }
-
-        // Filter by media type if needed
-        let ads = data.data;
-        // Note: Facebook API doesn't directly filter by media type in ads_archive
-        // We would need to check ad_snapshot_url content
-
-        renderFacebookAdsResults(ads);
-        showToast(`🔍 ${ads.length} annonces trouvées !`);
-
-    } catch (error) {
-        console.error('Facebook Ads search error:', error);
-        document.getElementById('fbLoading').style.display = 'none';
-        document.getElementById('fbEmptyState').style.display = 'block';
-        document.getElementById('fbEmptyState').innerHTML = `
-            <div class="empty-icon">❌</div>
-            <h3>Erreur de recherche</h3>
-            <p>${error.message}</p>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
-                Vérifiez que votre token est valide et non expiré.
-            </p>
-        `;
-    }
-}
-
-// Render Facebook Ads Results
-function renderFacebookAdsResults(ads) {
-    const grid = document.getElementById('fbAdsGrid');
-
-    grid.innerHTML = ads.map(ad => {
-        const pageName = ad.page_name || 'Page inconnue';
-        const adText = (ad.ad_creative_bodies && ad.ad_creative_bodies[0]) || '';
-        const headline = (ad.ad_creative_link_titles && ad.ad_creative_link_titles[0]) || '';
-        const description = (ad.ad_creative_link_descriptions && ad.ad_creative_link_descriptions[0]) || '';
-        const snapshotUrl = ad.ad_snapshot_url || '';
-        const createdDate = ad.ad_creation_time ? new Date(ad.ad_creation_time).toLocaleDateString('fr-FR') : '';
-        const platforms = ad.publisher_platforms ? ad.publisher_platforms.join(', ') : 'facebook';
-
-        return `
-            <div class="fb-ad-card">
-                <div class="fb-ad-content">
-                    <div class="fb-ad-page">
-                        <div class="fb-ad-page-icon">📄</div>
-                        <span class="fb-ad-page-name">${escapeHtml(pageName)}</span>
-                    </div>
-                    <div class="fb-ad-text">${escapeHtml(adText).substring(0, 200)}${adText.length > 200 ? '...' : ''}</div>
-                    ${headline ? `<div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(headline)}</div>` : ''}
-                    <div class="fb-ad-meta">
-                        ${createdDate ? `<span class="fb-ad-tag">📅 ${createdDate}</span>` : ''}
-                        <span class="fb-ad-tag">📱 ${platforms}</span>
-                    </div>
-                    <div class="fb-ad-actions">
-                        ${snapshotUrl ? `<a href="${snapshotUrl}" target="_blank" class="btn btn-secondary">👁️ Voir l'annonce</a>` : ''}
-                        <button class="btn btn-primary" onclick='addFbAdAsProduct(${JSON.stringify({
-            name: headline || adText.substring(0, 50),
-            description: adText,
-            page: pageName
-        }).replace(/'/g, "\\'")})'><span>➕</span> Ajouter</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Add Facebook Ad as Product
-function addFbAdAsProduct(adData) {
-    // Navigate to add product page with pre-filled data
-    navigateToSection('add-product');
-
-    // Pre-fill form with ad data
-    setTimeout(() => {
-        const nameInput = document.getElementById('productName');
-        const notesInput = document.getElementById('notes');
-
-        if (nameInput && adData.name) {
-            nameInput.value = adData.name.substring(0, 100);
-        }
-
-        if (notesInput) {
-            notesInput.value = `Source: Facebook Ad\nPage: ${adData.page || 'N/A'}\n\n${adData.description || ''}`;
-        }
-
-        showToast('📋 Données de l\'annonce importées ! Complétez les informations.');
-    }, 100);
 }
 
 // Enter key support for search
 document.getElementById('fbSearchKeyword')?.addEventListener('keypress', function (e) {
     if (e.key === 'Enter') {
-        searchFacebookAds();
+        openFacebookAdsLibrary();
     }
 });
