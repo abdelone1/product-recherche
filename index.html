@@ -551,15 +551,29 @@
             <div class="card">
                 <div class="card-header">
                     <h2>📱 Facebook Ads Library</h2>
+                    <button class="btn btn-secondary" onclick="toggleFbTokenConfig()">⚙️ Config</button>
+                </div>
+
+                <!-- Token Configuration (hidden by default) -->
+                <div class="fb-token-config" id="fbTokenConfig" style="display: none;">
+                    <div class="config-notice">
+                        <p>⚠️ Pour utiliser la recherche, vous devez configurer un Access Token Facebook.</p>
+                        <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Obtenir un token →</a>
+                    </div>
+                    <div class="form-group">
+                        <label for="fbAccessToken">Access Token Facebook</label>
+                        <input type="password" id="fbAccessToken" placeholder="Collez votre access token ici...">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveFacebookToken()">💾 Sauvegarder Token</button>
                 </div>
 
                 <!-- Search Bar -->
                 <div class="fb-search-container">
                     <div class="fb-search-bar">
                         <input type="text" id="fbSearchKeyword"
-                            placeholder="🔍 Entrez un mot-clé (ex: livraison gratuite, montre, promotion...)">
-                        <button class="btn btn-facebook" onclick="openFacebookAdsLibrary()">
-                            <span>🔍</span> Rechercher sur Facebook
+                            placeholder="🔍 Rechercher des annonces (ex: livraison gratuite, promotion...)">
+                        <button class="btn btn-facebook" onclick="searchFacebookAds()">
+                            <span>🔍</span> Rechercher
                         </button>
                     </div>
                     <div class="fb-filters">
@@ -568,11 +582,18 @@
                             <option value="SN">🇸🇳 Sénégal</option>
                             <option value="BF">🇧🇫 Burkina Faso</option>
                             <option value="TG">🇹🇬 Togo</option>
+                            <option value="NE">🇳🇪 Niger</option>
                             <option value="ML">🇲🇱 Mali</option>
                             <option value="BJ">🇧🇯 Bénin</option>
+                            <option value="GN">🇬🇳 Guinée</option>
+                            <option value="TD">🇹🇩 Tchad</option>
+                            <option value="GA">🇬🇦 Gabon</option>
                             <option value="CM">🇨🇲 Cameroun</option>
                             <option value="MA">🇲🇦 Maroc</option>
+                            <option value="DZ">🇩🇿 Algérie</option>
+                            <option value="TN">🇹🇳 Tunisie</option>
                             <option value="FR">🇫🇷 France</option>
+                            <option value="ALL">🌍 Tous les pays</option>
                         </select>
                         <select id="fbMediaFilter">
                             <option value="all">📷 Tous types</option>
@@ -582,67 +603,40 @@
                     </div>
                 </div>
 
-                <!-- Quick Country Links -->
-                <div class="fb-country-grid" style="padding: 20px;">
-                    <h3 style="margin-bottom: 16px;">🌍 Accès rapide par pays (vidéos)</h3>
-                    <div
-                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CI&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇨🇮 Côte d'Ivoire</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=SN&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇸🇳 Sénégal</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BF&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇧🇫 Burkina Faso</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=TG&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇹🇬 Togo</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ML&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇲🇱 Mali</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=BJ&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇧🇯 Bénin</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=CM&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇨🇲 Cameroun</a>
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=MA&media_type=video"
-                            target="_blank" class="btn btn-secondary">🇲🇦 Maroc</a>
+                <!-- Loading State -->
+                <div class="fb-loading" id="fbLoading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Recherche en cours...</p>
+                </div>
+
+                <!-- Results Grid -->
+                <div class="fb-ads-grid" id="fbAdsGrid">
+                    <!-- Ad cards will be inserted here -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="fb-empty-state" id="fbEmptyState">
+                    <div class="empty-icon">🔍</div>
+                    <h3>Recherchez des annonces Facebook</h3>
+                    <p>Entrez un mot-clé pour trouver des annonces concurrentes et des produits gagnants.</p>
+                    <div class="fb-tips">
+                        <h4>💡 Conseils de recherche :</h4>
+                        <ul>
+                            <li>Utilisez des mots-clés comme "livraison gratuite", "promotion", "nouveau"</li>
+                            <li>Recherchez par catégorie de produit (ex: "montre", "lampe", "cuisine")</li>
+                            <li>Les annonces avec vidéos ont souvent de meilleurs produits</li>
+                        </ul>
                     </div>
                 </div>
 
-                <!-- Tips Section -->
-                <div style="padding: 20px; background: var(--bg-secondary); margin: 20px; border-radius: 12px;">
-                    <h3 style="margin-bottom: 16px;">💡 Comment trouver des produits gagnants</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                        <div style="padding: 16px; background: var(--bg-card); border-radius: 8px;">
-                            <div style="font-size: 24px; margin-bottom: 8px;">1️⃣</div>
-                            <h4>Rechercher par mot-clé</h4>
-                            <p style="color: var(--text-muted); font-size: 13px;">Utilisez "livraison gratuite",
-                                "promotion", "nouveau"</p>
-                        </div>
-                        <div style="padding: 16px; background: var(--bg-card); border-radius: 8px;">
-                            <div style="font-size: 24px; margin-bottom: 8px;">2️⃣</div>
-                            <h4>Filtrer par vidéo</h4>
-                            <p style="color: var(--text-muted); font-size: 13px;">Les annonces vidéo = meilleurs
-                                produits</p>
-                        </div>
-                        <div style="padding: 16px; background: var(--bg-card); border-radius: 8px;">
-                            <div style="font-size: 24px; margin-bottom: 8px;">3️⃣</div>
-                            <h4>Vérifier la durée</h4>
-                            <p style="color: var(--text-muted); font-size: 13px;">Annonce active longtemps = rentable
-                            </p>
-                        </div>
-                        <div style="padding: 16px; background: var(--bg-card); border-radius: 8px;">
-                            <div style="font-size: 24px; margin-bottom: 8px;">4️⃣</div>
-                            <h4>Analyser la page</h4>
-                            <p style="color: var(--text-muted); font-size: 13px;">Beaucoup d'annonces = professionnel
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Telegram Channels -->
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 16px;">📢 Channels Telegram pour produits gagnants</h3>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <a href="https://t.me/topjemlaa" target="_blank" class="btn btn-secondary">📱 t.me/topjemlaa</a>
-                        <a href="https://t.me/hazargoma" target="_blank" class="btn btn-secondary">📱 t.me/hazargoma</a>
+                <!-- Quick Links (kept from before) -->
+                <div class="quick-links" style="margin-top: 20px;">
+                    <h3>🌍 Ouvrir Facebook Ad Library directement</h3>
+                    <div class="ads-actions" style="margin-top: 10px;">
+                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&media_type=video"
+                            target="_blank" class="btn btn-facebook">
+                            <span>📱</span> Ouvrir Facebook Ads Library
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1239,7 +1233,7 @@
         <span class="toast-message" id="toastMessage">Action réussie!</span>
     </div>
 
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=12"></script>
 </body>
 
 </html>
