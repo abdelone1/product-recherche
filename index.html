@@ -551,60 +551,92 @@
             <div class="card">
                 <div class="card-header">
                     <h2>📱 Facebook Ads Library</h2>
+                    <button class="btn btn-secondary" onclick="toggleFbTokenConfig()">⚙️ Config</button>
                 </div>
-                <div class="facebook-ads-content">
-                    <div class="ads-intro">
-                        <p>Utilisez la Facebook Ads Library pour trouver des produits gagnants. Voici comment procéder :
-                        </p>
-                    </div>
 
-                    <div class="ads-steps">
-                        <div class="step-card">
-                            <span class="step-number">1</span>
-                            <h3>Accéder à la Library</h3>
-                            <p>Cliquez sur le bouton ci-dessous pour ouvrir Facebook Ads Library</p>
-                        </div>
-                        <div class="step-card">
-                            <span class="step-number">2</span>
-                            <h3>Filtrer par Pays</h3>
-                            <p>Sélectionnez les pays africains cibles dans les filtres</p>
-                        </div>
-                        <div class="step-card">
-                            <span class="step-number">3</span>
-                            <h3>Rechercher par Vidéo</h3>
-                            <p>Les pubs vidéo ont souvent de meilleurs produits</p>
-                        </div>
-                        <div class="step-card">
-                            <span class="step-number">4</span>
-                            <h3>Analyser & Ajouter</h3>
-                            <p>Trouvez un bon produit et ajoutez-le ici</p>
-                        </div>
+                <!-- Token Configuration (hidden by default) -->
+                <div class="fb-token-config" id="fbTokenConfig" style="display: none;">
+                    <div class="config-notice">
+                        <p>⚠️ Pour utiliser la recherche, vous devez configurer un Access Token Facebook.</p>
+                        <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Obtenir un token →</a>
                     </div>
+                    <div class="form-group">
+                        <label for="fbAccessToken">Access Token Facebook</label>
+                        <input type="password" id="fbAccessToken" placeholder="Collez votre access token ici...">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveFacebookToken()">💾 Sauvegarder Token</button>
+                </div>
 
-                    <div class="ads-actions">
-                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&is_targeted_country=false&media_type=video"
+                <!-- Search Bar -->
+                <div class="fb-search-container">
+                    <div class="fb-search-bar">
+                        <input type="text" id="fbSearchKeyword"
+                            placeholder="🔍 Rechercher des annonces (ex: livraison gratuite, promotion...)">
+                        <button class="btn btn-facebook" onclick="searchFacebookAds()">
+                            <span>🔍</span> Rechercher
+                        </button>
+                    </div>
+                    <div class="fb-filters">
+                        <select id="fbCountryFilter">
+                            <option value="CI">🇨🇮 Côte d'Ivoire</option>
+                            <option value="SN">🇸🇳 Sénégal</option>
+                            <option value="BF">🇧🇫 Burkina Faso</option>
+                            <option value="TG">🇹🇬 Togo</option>
+                            <option value="NE">🇳🇪 Niger</option>
+                            <option value="ML">🇲🇱 Mali</option>
+                            <option value="BJ">🇧🇯 Bénin</option>
+                            <option value="GN">🇬🇳 Guinée</option>
+                            <option value="TD">🇹🇩 Tchad</option>
+                            <option value="GA">🇬🇦 Gabon</option>
+                            <option value="CM">🇨🇲 Cameroun</option>
+                            <option value="MA">🇲🇦 Maroc</option>
+                            <option value="DZ">🇩🇿 Algérie</option>
+                            <option value="TN">🇹🇳 Tunisie</option>
+                            <option value="FR">🇫🇷 France</option>
+                            <option value="ALL">🌍 Tous les pays</option>
+                        </select>
+                        <select id="fbMediaFilter">
+                            <option value="all">📷 Tous types</option>
+                            <option value="video">🎬 Vidéos uniquement</option>
+                            <option value="image">🖼️ Images uniquement</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="fb-loading" id="fbLoading" style="display: none;">
+                    <div class="loading-spinner"></div>
+                    <p>Recherche en cours...</p>
+                </div>
+
+                <!-- Results Grid -->
+                <div class="fb-ads-grid" id="fbAdsGrid">
+                    <!-- Ad cards will be inserted here -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="fb-empty-state" id="fbEmptyState">
+                    <div class="empty-icon">🔍</div>
+                    <h3>Recherchez des annonces Facebook</h3>
+                    <p>Entrez un mot-clé pour trouver des annonces concurrentes et des produits gagnants.</p>
+                    <div class="fb-tips">
+                        <h4>💡 Conseils de recherche :</h4>
+                        <ul>
+                            <li>Utilisez des mots-clés comme "livraison gratuite", "promotion", "nouveau"</li>
+                            <li>Recherchez par catégorie de produit (ex: "montre", "lampe", "cuisine")</li>
+                            <li>Les annonces avec vidéos ont souvent de meilleurs produits</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Quick Links (kept from before) -->
+                <div class="quick-links" style="margin-top: 20px;">
+                    <h3>🌍 Ouvrir Facebook Ad Library directement</h3>
+                    <div class="ads-actions" style="margin-top: 10px;">
+                        <a href="https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&media_type=video"
                             target="_blank" class="btn btn-facebook">
                             <span>📱</span> Ouvrir Facebook Ads Library
                         </a>
-                    </div>
-
-                    <div class="quick-links">
-                        <h3>🌍 Liens Rapides par Pays</h3>
-                        <div class="country-links" id="countryLinks">
-                            <!-- Country links will be inserted here -->
-                        </div>
-                    </div>
-
-                    <div class="telegram-channels">
-                        <h3>📢 Channels Telegram Recommandés</h3>
-                        <div class="channel-links">
-                            <a href="https://t.me/topjemlaa" target="_blank" class="channel-link">
-                                <span>📱</span> t.me/topjemlaa
-                            </a>
-                            <a href="https://t.me/hazargoma" target="_blank" class="channel-link">
-                                <span>📱</span> t.me/hazargoma
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1201,7 +1233,7 @@
         <span class="toast-message" id="toastMessage">Action réussie!</span>
     </div>
 
-    <script src="app.js?v=11"></script>
+    <script src="app.js?v=12"></script>
 </body>
 
 </html>
